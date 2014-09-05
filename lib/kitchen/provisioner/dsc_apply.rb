@@ -7,8 +7,11 @@
 # Licensed under the MIT License.  
 # See LICENSE for more details
 
+require "fileutils"
+require "pathname"
 require 'json'
 require 'kitchen/provisioner/base'
+require "kitchen/util"
 
 
 module Kitchen
@@ -55,7 +58,15 @@ module Kitchen
         candidates.find do |c|
           type == :directory ? File.directory?(c) : File.file?(c)
         end
-      end      
+      end 
+
+      def install_command
+        return nil
+      end
+
+      def init_command 
+
+
     end
   end
 end
