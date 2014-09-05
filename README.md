@@ -11,4 +11,4 @@ You'll need a driver box with WMF4 or greater.
 ## Installation & Setup
 You'll need the test-kitchen & kitchen-dsc gems installed in your system, along with kitchen-vagrant or some ther suitable driver for test-kitchen. 
 
-Please see the Provisioner Options (https://github.com/stevenmurawski/kitchen-dsc/blob/master/provisioner_options.md).
+Please see the Provisioner Options (https://github.com/smurawski/kitchen-dsc/blob/master/provisioner_options.md).
