@@ -32,41 +32,43 @@ module Kitchen
 
       default_config :powershell_version, nil
       
-      default_config :resource_module_path do |provisioner|
-        provisioner.calculate_path('Modules', :directory )
-      end
+      default_config :resource_module_path, 'Modules'
 
-      default_config :configuration_data_remote_path do |provisioner|
-        provisioner.calculate_path('ConfigurationData')
-      end      
+      default_config :configuration_data_remote_path, 'ConfigurationData'
 
-      default_config :configuration_script do |provisioner|
-        provisioner.calculate_path('configuration.ps1', :file) or
-          raise 'No configuration_script detected. Please specify one in .kitchen.yml'
-      end
+      default_config :configuration_script, 'configuration.ps1'        
 
       default_config :dsc_verbose, false      
-
-      def calculate_path(path, type = :directory)
-        base = config[:test_base_path]
-        candidates = []
-        candidates << File.join(base, instance.suite.name, 'dsc', path)
-        candidates << File.join(base, instance.suite.name, path)
-        candidates << File.join(base, path)
-        candidates << File.join(Dir.pwd, path)
-
-        candidates.find do |c|
-          type == :directory ? File.directory?(c) : File.file?(c)
-        end
-      end 
 
       def install_command
         return nil
       end
 
       def init_command 
+        firstline = "if (test-path #{config[:root_path]}) {remove-item -recurse -force #{config[:root_path]}}"
+        secondline = "mkdir #{config[:root_path]} | out-null"
+        lines = [firstline, secondline]
+        Util.wrap_command(lines.join("\n"), shell)
+      end      
 
+      def create_sandbox
+        super
+        FileUtils.mkdir_p(sandbox_path)
+        FileUtils.cp_r(config[:root_path], sandbox_path)
+        #Copy Modules and Configuration Data
+        #Copy Configuration Script
+      end
 
+      def prepare_command
+        generateconfig = "./configuration.ps1"
+        Util.wrap_command(generateconfig, shell)
+      end
+
+      def run_command
+        runconfig = "start-dscconfiguration -Wait -Verbose -Path ./TestKitchen"
+        Util.wrap_command(runconfig, shell)
+      end
+      
     end
   end
 end
