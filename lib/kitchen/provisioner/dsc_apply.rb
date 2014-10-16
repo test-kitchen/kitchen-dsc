@@ -41,29 +41,29 @@ module Kitchen
         super
         FileUtils.mkdir_p(sandbox_path)
 
-        # Stage DSC Resource Modules for copy to SUT
+        info('Staging DSC Resource Modules for copy to the SUT')
         FileUtils.cp_r(File.join(config[:kitchen_root], config[:modules_path]), File.join(sandbox_path, 'modules'))
         FileUtils.cp(File.join(config[:kitchen_root], config[:configuration_script]), File.join(sandbox_path, 'dsc_configuration.ps1'))
       end
 
       def prepare_command
-        # Move DSC Resources onto PSModulePath
-        stage_resources_script = <<-EOH
-          dir 'c:/tmp/kitchen/modules/*' -directory | copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
-        EOH
-        Util.wrap_command(stage_resources_script, shell)
+        info('Moving DSC Resources onto PSModulePath')
+        info('Generating the MOF script')
+        stage_resources_and_generate_mof_script = <<-EOH
+          
+          dir 'c:/tmp/kitchen/modules/*' -directory | 
+            copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
 
-        # Generate the MOF script
-        generate_mof_script = <<-EOH
           . c:/tmp/kitchen/dsc_configuration.ps1
-          test -outputpath c:/tmp/kitchen/configurations
+          
+          test -outputpath c:/tmp/kitchen/configurations | out-null
         EOH
 
-        Util.wrap_command(generate_mof_script, shell)
+        Util.wrap_command(stage_resources_and_generate_mof_script, shell)
       end
 
       def run_command
-        # Run the configuration and return the results
+        info('Running the configuration and return the results')
         run_configuration_script = <<-EOH
           $job = start-dscconfiguration -Path c:/tmp/kitchen/configurations/
           $job | wait-job

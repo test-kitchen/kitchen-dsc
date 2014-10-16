@@ -6,6 +6,7 @@ Gemfile.lock
 #  (source: https://github.com/github/gitignore/blob/master/Ruby.gitignore):
 
 *.rbc
+*.gem
 .bundle
 .config
 .rubocop.yml
