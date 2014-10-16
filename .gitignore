@@ -8,6 +8,7 @@ Gemfile.lock
 *.rbc
 .bundle
 .config
+.rubocop.yml
 coverage
 InstalledFiles
 lib/bundler/man
@@ -17,6 +18,7 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
+.DS_Store
 
 # YARD artifacts
 .yardoc

@@ -4,71 +4,73 @@
 #
 # Copyright (C) 2014 Steven Murawski
 #
-# Licensed under the MIT License.  
+# Licensed under the MIT License.
 # See LICENSE for more details
 
-require "fileutils"
-require "pathname"
+require 'fileutils'
+require 'pathname'
 require 'json'
 require 'kitchen/provisioner/base'
-require "kitchen/util"
-
+require 'kitchen/util'
 
 module Kitchen
-
   class Busser
-
     def non_suite_dirs
-      %w{data data_bags environments nodes roles puppet}
+      %w(data data_bags environments nodes roles)
     end
   end
 
   module Provisioner
     #
-    # Puppet Apply provisioner.
+    #
     #
     class DscApply < Base
       attr_accessor :tmp_dir
 
-      default_config :powershell_version, nil
-      
-      default_config :resource_module_path, 'Modules'
-
-      default_config :configuration_data_remote_path, 'ConfigurationData'
-
-      default_config :configuration_script, 'configuration.ps1'        
-
-      default_config :dsc_verbose, false      
+      default_config :modules_path, 'modules'
+      default_config :configuration_script, 'dsc_configuration.ps1'
 
       def install_command
-        return nil
+        nil
       end
 
-      def init_command 
-        firstline = "if (test-path #{config[:root_path]}) {remove-item -recurse -force #{config[:root_path]}}"
-        secondline = "mkdir #{config[:root_path]} | out-null"
-        lines = [firstline, secondline]
-        Util.wrap_command(lines.join("\n"), shell)
-      end      
+      def init_command
+      end
 
       def create_sandbox
         super
         FileUtils.mkdir_p(sandbox_path)
-        FileUtils.cp_r(config[:root_path], sandbox_path)
-        #Copy Modules and Configuration Data
-        #Copy Configuration Script
+
+        # Stage DSC Resource Modules for copy to SUT
+        FileUtils.cp_r(File.join(config[:kitchen_root], config[:modules_path]), File.join(sandbox_path, 'modules'))
+        FileUtils.cp(File.join(config[:kitchen_root], config[:configuration_script]), File.join(sandbox_path, 'dsc_configuration.ps1'))
       end
 
       def prepare_command
-        generateconfig = "./configuration.ps1"
-        Util.wrap_command(generateconfig, shell)
+        # Move DSC Resources onto PSModulePath
+        stage_resources_script = <<-EOH
+          dir 'c:/tmp/kitchen/modules/*' -directory | copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
+        EOH
+        Util.wrap_command(stage_resources_script, shell)
+
+        # Generate the MOF script
+        generate_mof_script = <<-EOH
+          . c:/tmp/kitchen/dsc_configuration.ps1
+          test -outputpath c:/tmp/kitchen/configurations
+        EOH
+
+        Util.wrap_command(generate_mof_script, shell)
       end
 
       def run_command
-        runconfig = "start-dscconfiguration -Wait -Verbose -Path ./TestKitchen"
-        Util.wrap_command(runconfig, shell)
+        # Run the configuration and return the results
+        run_configuration_script = <<-EOH
+          $job = start-dscconfiguration -Path c:/tmp/kitchen/configurations/
+          $job | wait-job
+          $job.childjobs[0].verbose
+        EOH
+        Util.wrap_command(run_configuration_script, shell)
       end
-      
     end
   end
 end
