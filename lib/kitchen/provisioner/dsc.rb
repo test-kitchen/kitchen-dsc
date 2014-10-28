@@ -87,7 +87,7 @@ module Kitchen
           dir 'c:/tmp/kitchen/modules/*' -directory |
             copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
 
-          . c:/tmp/kitchen/dsc_configuration.ps1
+          . c:/tmp/kitchen/#{config[:configuration_script]}
           #{config[:run_list][0]} -outputpath c:/tmp/kitchen/configurations | out-null
 
         EOH
