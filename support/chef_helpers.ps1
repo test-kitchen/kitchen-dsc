@@ -29,6 +29,7 @@ function download_chef($chef_url, $chef_msi) {
 
 # function to install chef with sort of a nice progress bar
 function install_chef {
+  Write-Host "`r`tInstalling chef-client from $chef_msi"
   $proc_msi = Start-Process -FilePath 'msiexec.exe' -ArgumentList "/qn /i $chef_msi" -Passthru
   $bar = ""
   while (-Not $proc_msi.HasExited ) {
@@ -36,6 +37,12 @@ function install_chef {
     Start-Sleep 2
     $bar += "#"
   }
-  rm -r $chef_msi
-  Write-Host -NoNewline "`r`t[MSI] [$bar] Completed!\n"
+  
+  if (is_chef_installed) {
+    Write-Host -NoNewline "`r`t[MSI] [$bar] Completed!\n"  
+  }
+  else {
+    throw 'Failed to install chef-client.'
+  }
+  
 }
