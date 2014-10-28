@@ -16,7 +16,30 @@ require 'pry'
 
 module Kitchen
   class Busser
-    def 
+     def setup_cmd
+      return if local_suite_files.empty?
+      ruby    = "#{config[:ruby_bindir]}/ruby"
+      gem     = sudo("#{config[:ruby_bindir]}/gem")
+      busser  = sudo(config[:busser_bin])
+
+      ## Need to parameterize this (for the cache location...)
+      case shell
+      when "powershell"
+        cmd = <<-CMD.gsub(/^ {10}/, "")
+          cd c:\\vagrant
+          #{busser_setup_env}
+          if ((gem list busser -i) -eq \"false\") {
+            gem install #{gem_install_args}
+          }
+          # We have to modify Busser::Setup to work with PowerShell
+          # busser setup
+          #{busser} plugin install #{plugins.join(" ")}
+        CMD
+      else
+        raise "[#{self}] Unsupported shell: #{shell}"
+      end
+      Util.wrap_command(cmd, shell)
+    end
 
     def non_suite_dirs
       %w(modules chef_installer configuration_data)
