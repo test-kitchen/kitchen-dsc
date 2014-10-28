@@ -141,7 +141,7 @@ module Kitchen
 
             $starting_chef_msi = '#{config[:chef_installer_path]}'
             if (test-path $starting_chef_msi) {
-              copy-item $starting_chef_msi -destination $chef_msi -verbose
+              copy-item $starting_chef_msi -destination $chef_msi
             }
             
             If (should_update_chef #{version}) {
