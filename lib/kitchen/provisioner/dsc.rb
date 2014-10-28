@@ -16,6 +16,8 @@ require 'pry'
 
 module Kitchen
   class Busser
+    def 
+
     def non_suite_dirs
       %w(modules chef_installer configuration_data)
     end
@@ -134,13 +136,14 @@ module Kitchen
           # NOTE We use SYSTEMDRIVE because if we use TEMP the installation fails.
           <<-INSTALL.gsub(/^ {10}/, '')
             
-            $chef_msi = '#{config[:chef_installer_path]}'
+            $chef_msi = join-path $env:SYSTEMDRIVE 'chef.msi'
             $chef_installer_directory = split-path $chef_msi
 
-            if (-not (test-path $chef_installer_directory)){
-              mkdir $chef_installer_directory | out-null
+            $starting_chef_msi = '#{config[:chef_installer_path]}'
+            if (test-path $starting_chef_msi) {
+              copy-item $starting_chef_msi -destination $chef_msi -verbose
             }
-
+            
             If (should_update_chef #{version}) {
               Write-Host "-----> Installing Chef Omnibus (#{version})\n"
               if (-not (test-path $chef_msi)) {

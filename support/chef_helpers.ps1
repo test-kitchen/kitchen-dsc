@@ -39,6 +39,7 @@ function install_chef {
   }
   
   if (is_chef_installed) {
+    remove-item $chef_msi
     Write-Host -NoNewline "`r`t[MSI] [$bar] Completed!\n"  
   }
   else {
