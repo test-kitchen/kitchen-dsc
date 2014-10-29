@@ -52,8 +52,7 @@ module Kitchen
 
       default_config :modules_path, 'modules'
       default_config :configuration_script, 'dsc_configuration.ps1'
-      default_config :require_chef_omnibus, true
-      default_config :install_chef_from_web, true
+      default_config :require_chef_omnibus, true      
       default_config :chef_installer_path, 'c:\tmp\kitchen\chef_installer\chef.msi'
       default_config :chef_omnibus_url, 'https://www.getchef.com/chef/install.sh'
 
@@ -80,7 +79,7 @@ module Kitchen
 
       def prepare_command
         info('Moving DSC Resources onto PSModulePath')
-        info("Generating the MOF script for the configuration #{config[:run_list][0]}")
+        info("Generating the MOF script for the configuration #{current_configuration}")
 
         stage_resources_and_generate_mof_script = <<-EOH
 
@@ -88,7 +87,7 @@ module Kitchen
             copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
 
           . c:/tmp/kitchen/#{config[:configuration_script]}
-          #{config[:run_list][0]} -outputpath c:/tmp/kitchen/configurations | out-null
+          #{current_configuration} -outputpath c:/tmp/kitchen/configurations | out-null
 
         EOH
 
@@ -96,7 +95,7 @@ module Kitchen
       end
 
       def run_command
-        info("Running the configuration #{config[:run_list][0]}")
+        info("Running the configuration #{current_configuration}")
         run_configuration_script = <<-EOH
 
           $job = start-dscconfiguration -Path c:/tmp/kitchen/configurations/
@@ -105,6 +104,10 @@ module Kitchen
 
         EOH
         Util.wrap_command(run_configuration_script, shell)
+      end
+
+      def current_configuration
+        run_list = config[:run_list] ? @instance.suite.name : config[:run_list][0]
       end
 
       # copied wholesale from chef_base
