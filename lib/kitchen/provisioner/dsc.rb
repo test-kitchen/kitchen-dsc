@@ -56,6 +56,7 @@ module Kitchen
       default_config :chef_installer, 'chef.msi'
       default_config :chef_omnibus_url, 'https://www.getchef.com/chef/install.sh'
 
+      default_config :wmf_version, 'wmf4'
       default_config :dsc_local_configuration_manager, { 
         :wmf4 => { 
           :reboot_if_needed => false 
@@ -88,10 +89,35 @@ module Kitchen
       end
 
       def prepare_command
+        info("Configuring the Local Configuration Manager (for #{config[:wmf_version]})"
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{current_configuration}")
 
+        local_configuration_manager_configuration = <<-LCMCONFIG
+          configuration lcm
+          {
+            localconfigurationmanager 
+            {
+
+        LCMCONFIG
+        case config[:wmf_version] 
+        when 'wmf4'
+          lcm_hash = config[:dsc_local_configuration_manager][:wmf4]
+          local_configuration_manager_configuration = local_configuration_manager_configuration + "\nRebootIfNeeded = $#{lcm_hash[:reboot_if_needed].to_s}"
+        when 'wmf5'
+          lcm_hash = config[:dsc_local_configuration_manager][:wmf5]
+          local_configuration_manager_configuration = local_configuration_manager_configuration + "\nRebootIfNeeded = $#{lcm_hash[:reboot_if_needed].to_s}"
+          local_configuration_manager_configuration = local_configuration_manager_configuration + "\nDebugMode = $#{lcm_hash[:debug_mode].to_s}"
+        else
+          fail "unknown management framework version"
+        end 
+
+        local_configuration_manager_configuration = local_configuration_manager_configuration + "\n\t}\n}"
+
         stage_resources_and_generate_mof_script = <<-EOH
+
+          lcm -outputpath c:/tmp/kitchen/lcm
+          set-dsclocalconfigurationmanager -path c:/tmp/kitchen/lcm
 
           dir 'c:/tmp/kitchen/modules/*' -directory |
             copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
@@ -101,7 +127,7 @@ module Kitchen
 
         EOH
 
-        Util.wrap_command(stage_resources_and_generate_mof_script, shell)
+        Util.wrap_command( local_configuration_manager_configuration + stage_resources_and_generate_mof_script, shell)
       end
 
       def run_command
