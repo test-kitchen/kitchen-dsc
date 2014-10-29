@@ -59,10 +59,10 @@ module Kitchen
       default_config :wmf_version, 'wmf4'
       default_config :dsc_local_configuration_manager, { 
         :wmf4 => { 
-          :reboot_if_needed => false 
+          :reboot_node_if_needed => false 
         }, 
         :wmf5 => { 
-          :reboot_if_needed => false,
+          :reboot_node_if_needed => false,
           :debug_mode => false
         }
       }
@@ -89,7 +89,7 @@ module Kitchen
       end
 
       def prepare_command
-        info("Configuring the Local Configuration Manager (for #{config[:wmf_version]}")
+        info("Configuring the Local Configuration Manager (for #{config[:wmf_version]})")
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{current_configuration}")
 
@@ -103,10 +103,10 @@ module Kitchen
         case config[:wmf_version] 
         when 'wmf4'
           lcm_hash = config[:dsc_local_configuration_manager][:wmf4]
-          local_configuration_manager_configuration = local_configuration_manager_configuration + "\nRebootIfNeeded = $#{lcm_hash[:reboot_if_needed].to_s}"
+          local_configuration_manager_configuration = local_configuration_manager_configuration + "\nRebootNodeIfNeeded = $#{lcm_hash[:reboot_node_if_needed].to_s}"
         when 'wmf5'
           lcm_hash = config[:dsc_local_configuration_manager][:wmf5]
-          local_configuration_manager_configuration = local_configuration_manager_configuration + "\nRebootIfNeeded = $#{lcm_hash[:reboot_if_needed].to_s}"
+          local_configuration_manager_configuration = local_configuration_manager_configuration + "\nRebootNodeIfNeeded = $#{lcm_hash[:reboot_node_if_needed].to_s}"
           local_configuration_manager_configuration = local_configuration_manager_configuration + "\nDebugMode = $#{lcm_hash[:debug_mode].to_s}"
         else
           fail "unknown management framework version"
@@ -116,7 +116,7 @@ module Kitchen
 
         stage_resources_and_generate_mof_script = <<-EOH
 
-          lcm -outputpath c:/tmp/kitchen/lcm
+          lcm -outputpath c:/tmp/kitchen/lcm | out-null
           set-dsclocalconfigurationmanager -path c:/tmp/kitchen/lcm
 
           dir 'c:/tmp/kitchen/modules/*' -directory |
