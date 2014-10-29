@@ -56,6 +56,16 @@ module Kitchen
       default_config :chef_installer, 'chef.msi'
       default_config :chef_omnibus_url, 'https://www.getchef.com/chef/install.sh'
 
+      default_config :dsc_local_configuration_manager, { 
+        :wmf4 => { 
+          :reboot_if_needed => false 
+        }, 
+        :wmf5 => { 
+          :reboot_if_needed => false,
+          :debug_mode => false
+        }
+      }
+
       def install_command
         return unless config[:require_chef_omnibus]
         info('Installing chef-client to allow bussers to run.')
