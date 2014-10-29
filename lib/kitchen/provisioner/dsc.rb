@@ -107,7 +107,7 @@ module Kitchen
       end
 
       def current_configuration
-        run_list = config[:run_list] ? @instance.suite.name : config[:run_list][0]
+        run_list = config.keys.include?(:run_list) ? config[:run_list][0] : @instance.suite.name
       end
 
       # copied wholesale from chef_base
