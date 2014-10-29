@@ -89,7 +89,7 @@ module Kitchen
       end
 
       def prepare_command
-        info("Configuring the Local Configuration Manager (for #{config[:wmf_version]})"
+        info("Configuring the Local Configuration Manager (for #{config[:wmf_version]}")
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{current_configuration}")
 
