@@ -16,27 +16,26 @@ require 'pry'
 
 module Kitchen
   class Busser
-     def setup_cmd
+    def setup_cmd
       return if local_suite_files.empty?
       ruby    = "#{config[:ruby_bindir]}/ruby"
       gem     = sudo("#{config[:ruby_bindir]}/gem")
       busser  = sudo(config[:busser_bin])
 
-      ## Need to parameterize this (for the cache location...)
       case shell
-      when "powershell"
-        cmd = <<-CMD.gsub(/^ {10}/, "")
-          cd c:\\vagrant
+      when 'powershell'
+        cmd = <<-CMD.gsub(/^ {10}/, '')
+          cd #{@instance.provisioner.local_cache_path}
           #{busser_setup_env}
           if ((gem list busser -i) -eq \"false\") {
             gem install #{gem_install_args}
           }
           # We have to modify Busser::Setup to work with PowerShell
           # busser setup
-          #{busser} plugin install #{plugins.join(" ")}
+          #{busser} plugin install #{plugins.join(' ')}
         CMD
       else
-        raise "[#{self}] Unsupported shell: #{shell}"
+        fail "[#{self}] Unsupported shell: #{shell}"
       end
       Util.wrap_command(cmd, shell)
     end
@@ -52,8 +51,9 @@ module Kitchen
 
       default_config :modules_path, 'modules'
       default_config :configuration_script, 'dsc_configuration.ps1'
-      default_config :require_chef_omnibus, true      
-      default_config :chef_installer_path, 'c:\tmp\kitchen\chef_installer\chef.msi'
+      default_config :require_chef_omnibus, true
+      default_config :local_cache_path, 'c:\tmp\kitchen\local_cache'
+      default_config :chef_installer, 'chef.msi'
       default_config :chef_omnibus_url, 'https://www.getchef.com/chef/install.sh'
 
       def install_command
@@ -107,9 +107,16 @@ module Kitchen
       end
 
       def current_configuration
-        run_list = config.keys.include?(:run_list) ? config[:run_list][0] : @instance.suite.name
+        config.keys.include?(:run_list) ? config[:run_list][0] : @instance.suite.name
       end
 
+      def local_cache_path
+        config[:local_cache_path]
+      end
+
+      def chef_installer_path
+        File.join(config[:local_cache_path], config[:chef_installer])
+      end
       # copied wholesale from chef_base
       # there's got to be a better way!
       def chef_shell_helpers
@@ -161,15 +168,15 @@ module Kitchen
 
           # NOTE We use SYSTEMDRIVE because if we use TEMP the installation fails.
           <<-INSTALL.gsub(/^ {10}/, '')
-            
+
             $chef_msi = join-path $env:SYSTEMDRIVE 'chef.msi'
             $chef_installer_directory = split-path $chef_msi
 
-            $starting_chef_msi = '#{config[:chef_installer_path]}'
+            $starting_chef_msi = '#{chef_installer_path}'
             if (test-path $starting_chef_msi) {
               copy-item $starting_chef_msi -destination $chef_msi
             }
-            
+
             If (should_update_chef #{version}) {
               Write-Host "-----> Installing Chef Omnibus (#{version})\n"
               if (-not (test-path $chef_msi)) {
