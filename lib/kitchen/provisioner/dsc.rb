@@ -43,11 +43,16 @@ module Kitchen
 
       def create_sandbox
         super
-        FileUtils.mkdir_p(sandbox_path)
 
+        module_path = File.join(config[:kitchen_root], config[:modules_path])
+        sandbox_module_path = File.join(sandbox_path, 'modules')
+        configuration_script_path = File.join(config[:kitchen_root], config[:configuration_script])
+        sandbox_configuration_script_path = File.join(sandbox_path, 'dsc_configuration.ps1')
         info('Staging DSC Resource Modules for copy to the SUT')
-        FileUtils.cp_r(File.join(config[:kitchen_root], config[:modules_path]), File.join(sandbox_path, 'modules'))
-        FileUtils.cp(File.join(config[:kitchen_root], config[:configuration_script]), File.join(sandbox_path, 'dsc_configuration.ps1'))
+        debug("Moving #{module_path} to #{sandbox_module_path}")
+        FileUtils.cp_r(module_path, sandbox_module_path)
+        debug("Moving #{configuration_script_path} to #{sandbox_configuration_script_path}")
+        FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
       end
 
       def prepare_command
@@ -64,19 +69,19 @@ module Kitchen
           #{current_configuration} -outputpath c:/configurations | out-null
 
         EOH
-
+        debug("Shelling out: #{stage_resources_and_generate_mof_script}")
         wrap_shell_code(stage_resources_and_generate_mof_script)
       end
 
       def run_command
         info("Running the configuration #{current_configuration}")
         run_configuration_script = <<-EOH
-
           $job = start-dscconfiguration -Path c:/configurations/
           $job | wait-job
           $job.childjobs[0].verbose
-
         EOH
+
+        debug("Shelling out: #{run_configuration_script}")
         wrap_shell_code(run_configuration_script)
       end
 
