@@ -43,14 +43,15 @@ module Kitchen
 
       def create_sandbox
         super
-
         module_path = File.join(config[:kitchen_root], config[:modules_path])
         sandbox_module_path = File.join(sandbox_path, 'modules')
         configuration_script_path = File.join(config[:kitchen_root], config[:configuration_script])
-        sandbox_configuration_script_path = File.join(sandbox_path, 'dsc_configuration.ps1')
+        sandbox_configuration_script_path = File.join(sandbox_path, config[:configuration_script])
+
         info('Staging DSC Resource Modules for copy to the SUT')
         debug("Moving #{module_path} to #{sandbox_module_path}")
         FileUtils.cp_r(module_path, sandbox_module_path)
+
         debug("Moving #{configuration_script_path} to #{sandbox_configuration_script_path}")
         FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
       end
@@ -58,16 +59,18 @@ module Kitchen
       def prepare_command
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{current_configuration}")
-
         stage_resources_and_generate_mof_script = <<-EOH
-
           dir ( join-path #{config[:root_path]} 'modules/*') -directory |
             copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
 
           mkdir 'c:/configurations' | out-null
-          . #{remote_path_join( config[:root_path], config[:configuration_script])}
+          $ConfigurationScriptPath = Join-path #{config[:root_path]} #{config[:configuration_script]}
+          if (-not (test-path $ConfigurationScriptPath))
+          {
+            throw "Failed to find $ConfigurationScriptPath"
+          }
+          invoke-expression (get-content $ConfigurationScriptPath -raw)
           #{current_configuration} -outputpath c:/configurations | out-null
-
         EOH
         debug("Shelling out: #{stage_resources_and_generate_mof_script}")
         wrap_shell_code(stage_resources_and_generate_mof_script)
