@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.email             = ['steven.murawski@gmail.com']
   s.homepage          = 'https://github.com/smurawski/kitchen-dsc'
   s.summary           = 'PowerShell DSC provisioner for test-kitchen'
-  candidates          = Dir.glob('{lib,support}/**/*') +  ['README.md', 'kitchen-dsc.gemspec']
+  candidates          = Dir.glob('lib/**/*') +  ['README.md', 'kitchen-dsc.gemspec']
   s.files             = candidates.sort
   s.platform          = Gem::Platform::RUBY
   s.require_paths     = ['lib']
