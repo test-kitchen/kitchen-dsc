@@ -56,11 +56,12 @@ module Kitchen
 
         stage_resources_and_generate_mof_script = <<-EOH
 
-          dir 'c:/tmp/kitchen/modules/*' -directory |
+          dir ( join-path #{config[:root_path]} 'modules/*') -directory |
             copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
 
-          . c:/tmp/kitchen/#{config[:configuration_script]}
-          #{current_configuration} -outputpath c:/tmp/kitchen/configurations | out-null
+          mkdir 'c:/configurations' | out-null
+          . #{remote_path_join( config[:root_path], config[:configuration_script])}
+          #{current_configuration} -outputpath c:/configurations | out-null
 
         EOH
 
@@ -71,7 +72,7 @@ module Kitchen
         info("Running the configuration #{current_configuration}")
         run_configuration_script = <<-EOH
 
-          $job = start-dscconfiguration -Path c:/tmp/kitchen/configurations/
+          $job = start-dscconfiguration -Path c:/configurations/
           $job | wait-job
           $job.childjobs[0].verbose
 
@@ -79,10 +80,15 @@ module Kitchen
         wrap_shell_code(run_configuration_script)
       end
 
+      private
+
       def current_configuration
         config.keys.include?(:run_list) ? config[:run_list][0] : @instance.suite.name
       end
 
+      def is_resource_module?
+        #TODO
+      end
 
     end
   end
