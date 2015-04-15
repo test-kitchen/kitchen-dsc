@@ -42,7 +42,7 @@ module Kitchen
       def install_command
         lcm_config = config[:dsc_local_configuration_manager]
         case config[:dsc_local_configuration_manager_version]
-        when 'wmf4_legacy'
+        when 'wmf4_legacy', 'wmf4'
           lcm_configuration_script = <<-LCMSETUP
             configuration SetupLCM
             {
