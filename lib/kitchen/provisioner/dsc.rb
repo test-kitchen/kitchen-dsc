@@ -189,14 +189,14 @@ module Kitchen
       end
 
       def sandboxed_configuration_script
-        File.join('configuration', config[:configuration_script])
+        File.join('./configuration', config[:configuration_script])
       end
 
       def prepare_configuration_script
         configuration_script_file = File.join(config[:configuration_script_folder], config[:configuration_script])
         configuration_script_path = File.join(config[:kitchen_root], configuration_script_file)
         sandbox_configuration_script_path = File.join(sandbox_path, sandboxed_configuration_script)
-
+        FileUtils.mkdir_p(File.dirname(sandbox_configuration_script_path))
         debug("Moving #{configuration_script_path} to #{sandbox_configuration_script_path}")
         FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
       end
