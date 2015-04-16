@@ -113,7 +113,7 @@ module Kitchen
           {
             mkdir 'c:/configurations' | out-null
           }
-          $ConfigurationScriptPath = Join-path #{config[:root_path]} #{config[:configuration_script]}
+          $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
           if (-not (test-path $ConfigurationScriptPath))
           {
             throw "Failed to find $ConfigurationScriptPath"
@@ -188,10 +188,14 @@ module Kitchen
         FileUtils.cp_r(module_path, sandbox_module_path)
       end
 
+      def sandboxed_configuration_script
+        File.join('configuration', config[:configuration_script])
+      end
+
       def prepare_configuration_script
         configuration_script_file = File.join(config[:configuration_script_folder], config[:configuration_script])
         configuration_script_path = File.join(config[:kitchen_root], configuration_script_file)
-        sandbox_configuration_script_path = File.join(sandbox_path, config[:configuration_script])
+        sandbox_configuration_script_path = File.join(sandbox_path, sandboxed_configuration_script)
 
         debug("Moving #{configuration_script_path} to #{sandbox_configuration_script_path}")
         FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
