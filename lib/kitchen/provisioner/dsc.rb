@@ -21,6 +21,7 @@ module Kitchen
       attr_accessor :tmp_dir
 
       default_config :modules_path, 'modules'
+      
       default_config :configuration_script_folder, 'examples'
       default_config :configuration_script, 'dsc_configuration.ps1'
       default_config :configuration_name do |provisioner|

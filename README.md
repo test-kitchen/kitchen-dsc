@@ -18,8 +18,11 @@ You'll need the test-kitchen & kitchen-dsc gems installed in your system, along 
   * The location of a PowerShell script(s) containing the DSC configuration command(s).
 * configuration_script
   * Defaults to 'dsc_configuration.ps1'
-  * The name of the PowerShell script containing the DSC configuration command(s).
-  * The configuration command name used defaults to the suite name (and can be overridden by the run_list parameter in the suite).
+  * The name of the PowerShell script containing the DSC configuration command(s) (and possibly configuration data)
+* configuration_name
+  * Name of the configuration to run, defaults to the suite name.
+* configuration_data_variable
+  * Name of the variable in the configuration_script that contains the ConfigurationData hashtable
 * dsc_local_configuration_manager_version
   * Defaults to 'wmf4' ()
   * Identifies what version of the LCM is in place
