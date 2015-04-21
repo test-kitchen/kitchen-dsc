@@ -23,6 +23,10 @@ module Kitchen
       default_config :modules_path, 'modules'
       default_config :configuration_script_folder, 'examples'
       default_config :configuration_script, 'dsc_configuration.ps1'
+      default_config :configuration_name do |provisioner|
+        provisioner.instance.suite.name
+      end
+      default_config :configuration_data_variable
 
       default_config :dsc_local_configuration_manager_version, 'wmf4'
       default_config :dsc_local_configuration_manager, {
@@ -77,7 +81,7 @@ module Kitchen
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
-            SetupLCM
+            $null = SetupLCM
             Set-DscLocalConfigurationManager -Path ./SetupLCM
           LCMSETUP
         end
@@ -104,7 +108,7 @@ module Kitchen
       # rubocop:disable Metrics/LineLength
       def prepare_command
         info('Moving DSC Resources onto PSModulePath')
-        info("Generating the MOF script for the configuration #{current_configuration}")
+        info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
           dir ( join-path #{config[:root_path]} 'modules/*') -directory |
             copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
@@ -118,8 +122,12 @@ module Kitchen
           {
             throw "Failed to find $ConfigurationScriptPath"
           }
-          invoke-expression (get-content $ConfigurationScriptPath -raw)
-          #{current_configuration} -outputpath c:/configurations | out-null
+          invoke-expression (get-content $ConfigurationScriptPath -raw) 
+          if (-not (get-command #{config[:configuration_name]}))
+          {
+            throw "Failed to create a configuration command #{config[:configuration_name]}"
+          }
+          $null = #{config[:configuration_name]} -outputpath c:/configurations #{'-configurationdata $' + config[:configuration_data_variable] if config[:configuration_data_variable]}
         EOH
         debug("Shelling out: #{stage_resources_and_generate_mof_script}")
         wrap_shell_code(stage_resources_and_generate_mof_script)
@@ -127,7 +135,7 @@ module Kitchen
       # rubocop:enable Metrics/LineLength
 
       def run_command
-        info("Running the configuration #{current_configuration}")
+        info("Running the configuration #{config[:configuration_name]}")
         run_configuration_script = <<-EOH
           $job = start-dscconfiguration -Path c:/configurations/ -force
           $job | wait-job
@@ -139,10 +147,6 @@ module Kitchen
       end
 
       private
-
-      def current_configuration
-        config.keys.include?(:run_list) ? config[:run_list][0] : @instance.suite.name
-      end
 
       def resource_module?
         module_metadata_file = File.join(config[:kitchen_root], "#{module_name}.psd1")
@@ -189,7 +193,7 @@ module Kitchen
       end
 
       def sandboxed_configuration_script
-        File.join('./configuration', config[:configuration_script])
+        File.join('configuration', config[:configuration_script])
       end
 
       def prepare_configuration_script
