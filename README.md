@@ -9,8 +9,8 @@ You'll need a driver box with WMF4 or greater (ONLY WINDOWS SYSTEMS)
 You'll need the test-kitchen & kitchen-dsc gems installed in your system, along with kitchen-vagrant or some ther suitable driver for test-kitchen. 
 
 ## Example Configurations
-[Repository Style Testing](https://github.com/smurawski/dsc-kitchen-project)
-[Module Style Testing](https://github.com/powershellorg/cwebadministration/tree/smurawski/adding_tests)
+* [Repository Style Testing](https://github.com/smurawski/dsc-kitchen-project)
+* [Module Style Testing](https://github.com/powershellorg/cwebadministration/tree/smurawski/adding_tests)
 
 ## Configuration Settings
 * configuration_script_folder
