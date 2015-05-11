@@ -1,3 +1,5 @@
+[![Gem Version](https://badge.fury.io/rb/kitchen-dsc.svg)](http://badge.fury.io/rb/kitchen-dsc)
+
 # kitchen-dsc
 A Test Kitchen Provisioner for PowerShell DSC
 
