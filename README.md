@@ -10,6 +10,15 @@ You'll need a driver box with WMF4 or greater (ONLY WINDOWS SYSTEMS)
 ## Installation & Setup
 You'll need the test-kitchen & kitchen-dsc gems installed in your system, along with kitchen-vagrant or some ther suitable driver for test-kitchen. 
 
+### Install from source
+
+After cloning this repository, the following commands will install kitchen-dsc from source:
+
+		chef exec gem build .\kitchen-dsc.gemspec
+		chef exec gem install .\kitchen-dsc-0.3.0.gem
+
+NOTE: If you already have a prior version installed, this should replace it.  Otherwise you can uninstall by running `chef exec gem uninstall kitchen-dsc` prior to installing from source.
+
 ## Example Configurations
 * [Repository Style Testing](https://github.com/smurawski/dsc-kitchen-project)
 * [Module Style Testing](https://github.com/powershellorg/cwebadministration/tree/smurawski/adding_tests)

@@ -99,7 +99,8 @@ module Kitchen
         if resource_module?
           prepare_resource_style_directory
         else
-          prepare_repo_style_directory
+          # prepare_repo_style_directory
+          prepare_class_resource_style_directory
         end
         info('Staging DSC configuration script for copy to the SUT')
         prepare_configuration_script
@@ -182,6 +183,21 @@ module Kitchen
           debug("Staging #{src} ")
           debug("  at #{dest}")
           FileUtils.cp(src, dest, preserve: true)
+        end
+      end
+
+       def prepare_class_resource_style_directory
+        sandbox_base_module_path = File.join(sandbox_path, "modules/#{module_name}")
+
+        base = config[:kitchen_root]
+        list_files(base).each do |src|
+          if %w{ .psd1 .psm1 }.include? File.extname(src)
+            dest = File.join(sandbox_base_module_path, src.sub("#{base}/", ''))
+            FileUtils.mkdir_p(File.dirname(dest))
+            debug("Staging #{src} ")
+            debug("  at #{dest}")
+            FileUtils.cp(src, dest, preserve: true)
+          end
         end
       end
 
