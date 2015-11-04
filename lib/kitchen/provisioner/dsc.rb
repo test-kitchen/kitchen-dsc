@@ -98,9 +98,10 @@ module Kitchen
         info('Staging DSC Resource Modules for copy to the SUT')
         if resource_module?
           prepare_resource_style_directory
-        else
-          # prepare_repo_style_directory
+        elsif class_resource_module?
           prepare_class_resource_style_directory
+        else
+          prepare_repo_style_directory
         end
         info('Staging DSC configuration script for copy to the SUT')
         prepare_configuration_script
@@ -155,6 +156,13 @@ module Kitchen
         module_dsc_resource_folder = File.join(config[:kitchen_root], 'DSCResources')
         File.exist?(module_metadata_file) &&
           File.exist?(module_dsc_resource_folder)
+      end
+
+      def class_resource_module?
+        module_metadata_file = File.join(config[:kitchen_root], "#{module_name}.psd1")
+        module_dsc_resource_folder = File.join(config[:kitchen_root], 'DSCResources')
+        File.exist?(module_metadata_file) &&
+          !File.exist?(module_dsc_resource_folder)
       end
 
       def list_files(path)
