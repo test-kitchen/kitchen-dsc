@@ -38,9 +38,9 @@ You'll need the test-kitchen & kitchen-dsc gems installed in your system, along 
     * allow_module_overwrite = false
     * certificate_id = nil
     * configuration_mode = 'ApplyAndAutoCorrect'
-    * configuration_mode_frequency_mins = 30
-    * debug_mode = 'All'                        # wmf4_with_update or wmf5
-    * refresh_frequency_mins = 15
+    * configuration_mode_frequency_mins = 30    # 15 on wmf5
+    * debug_mode = 'All'                        # wmf4_with_update
+    * refresh_frequency_mins = 15               # 30 on wmf5
     * refresh_mode = 'PUSH'
 
 ### Specific to repository style testing
