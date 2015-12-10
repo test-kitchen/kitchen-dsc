@@ -111,9 +111,11 @@ module Kitchen
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
-          dir ( join-path #{config[:root_path]} 'modules/*') -directory |
-            copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
-
+          if (Test-Path (join-path #{config[:root_path]} 'modules'))
+          {
+            dir ( join-path #{config[:root_path]} 'modules/*') -directory |
+              copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
+          }
           if (-not (test-path 'c:/configurations'))
           {
             mkdir 'c:/configurations' | out-null
@@ -189,8 +191,12 @@ module Kitchen
         module_path = File.join(config[:kitchen_root], config[:modules_path])
         sandbox_module_path = File.join(sandbox_path, 'modules')
 
-        debug("Moving #{module_path} to #{sandbox_module_path}")
-        FileUtils.cp_r(module_path, sandbox_module_path)
+        if Dir.exist?(module_path)
+            debug("Moving #{module_path} to #{sandbox_module_path}")
+            FileUtils.cp_r(module_path, sandbox_module_path)
+        else
+            debug("The modules path #{module_path} was not found. Not moving to #{sandbox_module_path}.")
+        end
       end
 
       def sandboxed_configuration_script
