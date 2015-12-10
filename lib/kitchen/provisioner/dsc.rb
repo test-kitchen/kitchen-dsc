@@ -21,7 +21,7 @@ module Kitchen
       attr_accessor :tmp_dir
 
       default_config :modules_path, 'modules'
-      
+
       default_config :configuration_script_folder, 'examples'
       default_config :configuration_script, 'dsc_configuration.ps1'
       default_config :configuration_name do |provisioner|
@@ -35,10 +35,8 @@ module Kitchen
         allow_module_overwrite: false,
         certificate_id: nil,
         configuration_mode: 'ApplyAndAutoCorrect',
-        configuration_mode_frequency_mins: 30,
         debug_mode: 'All',
         reboot_if_needed: false,
-        refresh_frequency_mins: 15,
         refresh_mode: 'PUSH'
       }
 
@@ -56,16 +54,14 @@ module Kitchen
                 AllowModuleOverwrite = [bool]::Parse('#{lcm_config[:allow_module_overwrite]}')
                 CertificateID = '#{lcm_config[:certificate_id].nil? ? '$null' : lcm_config[:certificate_id]}'
                 ConfigurationMode = '#{lcm_config[:configuration_mode]}'
-                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins]}
+                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '30' : lcm_config[:configuration_mode_frequency_mins]}
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
-            SetupLCM
-            Set-DscLocalConfigurationManager -Path ./SetupLCM
           LCMSETUP
-        when 'wmf4_with_update', 'wmf5'
+        when 'wmf4_with_update'
           lcm_configuration_script = <<-LCMSETUP
             configuration SetupLCM
             {
@@ -75,18 +71,40 @@ module Kitchen
                 AllowModuleOverwrite = [bool]::Parse('#{lcm_config[:allow_module_overwrite]}')
                 CertificateID = '#{lcm_config[:certificate_id].nil? ? '$null' : lcm_config[:certificate_id]}'
                 ConfigurationMode = '#{lcm_config[:configuration_mode]}'
-                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins]}
+                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '30' : lcm_config[:configuration_mode_frequency_mins]}
                 DebugMode = '#{lcm_config[:debug_mode]}'
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
-            $null = SetupLCM
-            Set-DscLocalConfigurationManager -Path ./SetupLCM
+          LCMSETUP
+        when 'wmf5'
+          lcm_configuration_script = <<-LCMSETUP
+            configuration SetupLCM
+            {
+              LocalConfigurationManager
+              {
+                ActionAfterReboot = '#{lcm_config[:action_after_reboot]}'
+                AllowModuleOverwrite = [bool]::Parse('#{lcm_config[:allow_module_overwrite]}')
+                CertificateID = '#{lcm_config[:certificate_id].nil? ? '$null' : lcm_config[:certificate_id]}'
+                ConfigurationMode = '#{lcm_config[:configuration_mode]}'
+                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '15' : lcm_config[:configuration_mode_frequency_mins]}
+                RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '30' : lcm[:refresh_frequency_mins]}
+                RefreshMode = '#{lcm_config[:refresh_mode]}'
+              }
+            }
           LCMSETUP
         end
-        wrap_shell_code(lcm_configuration_script)
+        full_lcm_configuration_script = <<-EOH
+        #{lcm_configuration_script}
+        
+        $null = SetupLCM
+        Set-DscLocalConfigurationManager -Path ./SetupLCM
+        EOH
+
+        wrap_shell_code(full_lcm_configuration_script)
       end
       # rubocop:enable Metrics/LineLength
 
@@ -96,7 +114,7 @@ module Kitchen
       def create_sandbox
         super
         info('Staging DSC Resource Modules for copy to the SUT')
-        if resource_module?
+        if resource_module? || class_resource_module?
           prepare_resource_style_directory
         else
           prepare_repo_style_directory
@@ -111,9 +129,11 @@ module Kitchen
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
-          dir ( join-path #{config[:root_path]} 'modules/*') -directory |
-            copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
-
+          if (Test-Path (join-path #{config[:root_path]} 'modules'))
+          {
+            dir ( join-path #{config[:root_path]} 'modules/*') -directory |
+              copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
+          }
           if (-not (test-path 'c:/configurations'))
           {
             mkdir 'c:/configurations' | out-null
@@ -123,7 +143,7 @@ module Kitchen
           {
             throw "Failed to find $ConfigurationScriptPath"
           }
-          invoke-expression (get-content $ConfigurationScriptPath -raw) 
+          invoke-expression (get-content $ConfigurationScriptPath -raw)
           if (-not (get-command #{config[:configuration_name]}))
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
@@ -154,6 +174,13 @@ module Kitchen
         module_dsc_resource_folder = File.join(config[:kitchen_root], 'DSCResources')
         File.exist?(module_metadata_file) &&
           File.exist?(module_dsc_resource_folder)
+      end
+
+      def class_resource_module?
+        module_metadata_file = File.join(config[:kitchen_root], "#{module_name}.psd1")
+        module_dsc_resource_folder = File.join(config[:kitchen_root], 'DSCResources')
+        File.exist?(module_metadata_file) &&
+          !File.exist?(module_dsc_resource_folder)
       end
 
       def list_files(path)
@@ -189,8 +216,12 @@ module Kitchen
         module_path = File.join(config[:kitchen_root], config[:modules_path])
         sandbox_module_path = File.join(sandbox_path, 'modules')
 
-        debug("Moving #{module_path} to #{sandbox_module_path}")
-        FileUtils.cp_r(module_path, sandbox_module_path)
+        if Dir.exist?(module_path)
+            debug("Moving #{module_path} to #{sandbox_module_path}")
+            FileUtils.cp_r(module_path, sandbox_module_path)
+        else
+            debug("The modules path #{module_path} was not found. Not moving to #{sandbox_module_path}.")
+        end
       end
 
       def sandboxed_configuration_script
