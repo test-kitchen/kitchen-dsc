@@ -21,7 +21,7 @@ module Kitchen
       attr_accessor :tmp_dir
 
       default_config :modules_path, 'modules'
-      
+
       default_config :configuration_script_folder, 'examples'
       default_config :configuration_script, 'dsc_configuration.ps1'
       default_config :configuration_name do |provisioner|
@@ -35,10 +35,8 @@ module Kitchen
         allow_module_overwrite: false,
         certificate_id: nil,
         configuration_mode: 'ApplyAndAutoCorrect',
-        configuration_mode_frequency_mins: 30,
         debug_mode: 'All',
         reboot_if_needed: false,
-        refresh_frequency_mins: 15,
         refresh_mode: 'PUSH'
       }
 
@@ -56,16 +54,14 @@ module Kitchen
                 AllowModuleOverwrite = [bool]::Parse('#{lcm_config[:allow_module_overwrite]}')
                 CertificateID = '#{lcm_config[:certificate_id].nil? ? '$null' : lcm_config[:certificate_id]}'
                 ConfigurationMode = '#{lcm_config[:configuration_mode]}'
-                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins]}
+                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '30' : lcm_config[:configuration_mode_frequency_mins]}
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
-            SetupLCM
-            Set-DscLocalConfigurationManager -Path ./SetupLCM
           LCMSETUP
-        when 'wmf4_with_update', 'wmf5'
+        when 'wmf4_with_update'
           lcm_configuration_script = <<-LCMSETUP
             configuration SetupLCM
             {
@@ -75,18 +71,40 @@ module Kitchen
                 AllowModuleOverwrite = [bool]::Parse('#{lcm_config[:allow_module_overwrite]}')
                 CertificateID = '#{lcm_config[:certificate_id].nil? ? '$null' : lcm_config[:certificate_id]}'
                 ConfigurationMode = '#{lcm_config[:configuration_mode]}'
-                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins]}
+                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '30' : lcm_config[:configuration_mode_frequency_mins]}
                 DebugMode = '#{lcm_config[:debug_mode]}'
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
-            $null = SetupLCM
-            Set-DscLocalConfigurationManager -Path ./SetupLCM
+          LCMSETUP
+        when 'wmf5'
+          lcm_configuration_script = <<-LCMSETUP
+            configuration SetupLCM
+            {
+              LocalConfigurationManager
+              {
+                ActionAfterReboot = '#{lcm_config[:action_after_reboot]}'
+                AllowModuleOverwrite = [bool]::Parse('#{lcm_config[:allow_module_overwrite]}')
+                CertificateID = '#{lcm_config[:certificate_id].nil? ? '$null' : lcm_config[:certificate_id]}'
+                ConfigurationMode = '#{lcm_config[:configuration_mode]}'
+                ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '15' : lcm_config[:configuration_mode_frequency_mins]}
+                RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '30' : lcm[:refresh_frequency_mins]}
+                RefreshMode = '#{lcm_config[:refresh_mode]}'
+              }
+            }
           LCMSETUP
         end
-        wrap_shell_code(lcm_configuration_script)
+        full_lcm_configuration_script = <<-EOH
+        #{lcm_configuration_script}
+        
+        $null = SetupLCM
+        Set-DscLocalConfigurationManager -Path ./SetupLCM
+        EOH
+
+        wrap_shell_code(full_lcm_configuration_script)
       end
       # rubocop:enable Metrics/LineLength
 
@@ -125,7 +143,7 @@ module Kitchen
           {
             throw "Failed to find $ConfigurationScriptPath"
           }
-          invoke-expression (get-content $ConfigurationScriptPath -raw) 
+          invoke-expression (get-content $ConfigurationScriptPath -raw)
           if (-not (get-command #{config[:configuration_name]}))
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
