@@ -96,10 +96,8 @@ module Kitchen
       def create_sandbox
         super
         info('Staging DSC Resource Modules for copy to the SUT')
-        if resource_module?
+        if resource_module? || class_resource_module?
           prepare_resource_style_directory
-        elsif class_resource_module?
-          prepare_class_resource_style_directory
         else
           prepare_repo_style_directory
         end
@@ -113,9 +111,11 @@ module Kitchen
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
-          dir ( join-path #{config[:root_path]} 'modules/*') -directory |
-            copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
-
+          if (Test-Path (join-path #{config[:root_path]} 'modules'))
+          {
+            dir ( join-path #{config[:root_path]} 'modules/*') -directory |
+              copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
+          }
           if (-not (test-path 'c:/configurations'))
           {
             mkdir 'c:/configurations' | out-null
@@ -191,21 +191,6 @@ module Kitchen
           debug("Staging #{src} ")
           debug("  at #{dest}")
           FileUtils.cp(src, dest, preserve: true)
-        end
-      end
-
-       def prepare_class_resource_style_directory
-        sandbox_base_module_path = File.join(sandbox_path, "modules/#{module_name}")
-
-        base = config[:kitchen_root]
-        list_files(base).each do |src|
-          if %w{ .psd1 .psm1 }.include? File.extname(src)
-            dest = File.join(sandbox_base_module_path, src.sub("#{base}/", ''))
-            FileUtils.mkdir_p(File.dirname(dest))
-            debug("Staging #{src} ")
-            debug("  at #{dest}")
-            FileUtils.cp(src, dest, preserve: true)
-          end
         end
       end
 
