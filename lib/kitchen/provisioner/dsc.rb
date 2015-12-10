@@ -99,9 +99,10 @@ module Kitchen
         end
         full_lcm_configuration_script = <<-EOH
         #{lcm_configuration_script}
-        
+
         $null = SetupLCM
         Set-DscLocalConfigurationManager -Path ./SetupLCM
+        if ($PSVersionTable.PSVersion.Major -ge 5) {Enable-DscDebug}
         EOH
 
         wrap_shell_code(full_lcm_configuration_script)
