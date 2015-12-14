@@ -28,7 +28,7 @@ module Kitchen
         provisioner.instance.suite.name
       end
       default_config :configuration_data_variable
-	  default_config :enable_dsc_debug, false
+      default_config :enable_dsc_debug, false
 
       default_config :dsc_local_configuration_manager_version, 'wmf4'
       default_config :dsc_local_configuration_manager, {
