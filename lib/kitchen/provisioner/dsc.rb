@@ -28,6 +28,7 @@ module Kitchen
         provisioner.instance.suite.name
       end
       default_config :configuration_data_variable
+	  default_config :enable_dsc_debug, false
 
       default_config :dsc_local_configuration_manager_version, 'wmf4'
       default_config :dsc_local_configuration_manager, {
@@ -91,7 +92,7 @@ module Kitchen
                 ConfigurationMode = '#{lcm_config[:configuration_mode]}'
                 ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '15' : lcm_config[:configuration_mode_frequency_mins]}
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '30' : lcm[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '30' : lcm_config[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
@@ -102,7 +103,7 @@ module Kitchen
 
         $null = SetupLCM
         Set-DscLocalConfigurationManager -Path ./SetupLCM
-        if ($PSVersionTable.PSVersion.Major -ge 5) {Enable-DscDebug}
+        if ([bool]::Parse('#{config[:enable_dsc_debug]}') -and $PSVersionTable.PSVersion.Major -ge 5) {Enable-DscDebug -BreakAll}
         EOH
 
         wrap_shell_code(full_lcm_configuration_script)
