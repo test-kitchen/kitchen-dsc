@@ -25,6 +25,9 @@ You'll need the test-kitchen & kitchen-dsc gems installed in your system, along 
   * Name of the configuration to run, defaults to the suite name.
 * configuration_data_variable
   * Name of the variable in the configuration_script that contains the ConfigurationData hashtable
+* enable_dsc_debug
+  * Defaults to false
+  * Specifies whether to run the "Enable-DscDebug -BreakAll" command before applying the DSC configuration. Only applicable to wmf5.
 * dsc_local_configuration_manager_version
   * Defaults to 'wmf4' ()
   * Identifies what version of the LCM is in place
