@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.version           = Kitchen::Dsc::VERSION
   s.authors           = ['Steven Murawski']
   s.email             = ['steven.murawski@gmail.com']
-  s.homepage          = 'https://github.com/smurawski/kitchen-dsc'
+  s.homepage          = 'https://github.com/test-kitchen/kitchen-dsc'
   s.summary           = 'PowerShell DSC provisioner for test-kitchen'
   candidates          = Dir.glob('lib/**/*') + ['README.md', 'kitchen-dsc.gemspec']
   s.files             = candidates.sort
