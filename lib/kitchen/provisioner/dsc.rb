@@ -27,7 +27,9 @@ module Kitchen
       default_config :configuration_name do |provisioner|
         provisioner.instance.suite.name
       end
+
       default_config :configuration_data_variable
+      default_config :configuration_data
 
       default_config :dsc_local_configuration_manager_version, 'wmf4'
       default_config :dsc_local_configuration_manager, {
@@ -90,6 +92,7 @@ module Kitchen
                 CertificateID = '#{lcm_config[:certificate_id].nil? ? '$null' : lcm_config[:certificate_id]}'
                 ConfigurationMode = '#{lcm_config[:configuration_mode]}'
                 ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '15' : lcm_config[:configuration_mode_frequency_mins]}
+                DebugMode = '#{lcm_config[:debug_mode]}'
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
                 RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '30' : lcm[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
@@ -102,7 +105,6 @@ module Kitchen
 
         $null = SetupLCM
         Set-DscLocalConfigurationManager -Path ./SetupLCM
-        if ($PSVersionTable.PSVersion.Major -ge 5) {Enable-DscDebug}
         EOH
 
         wrap_shell_code(full_lcm_configuration_script)
@@ -127,6 +129,7 @@ module Kitchen
       # Disable line length check, it is all logging and embedded script.
       # rubocop:disable Metrics/LineLength
       def prepare_command
+        configuration_data_variable = config[:configuration_data_variable].nil? ? 'ConfigurationData' : config[:configuration_data_variable]
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
@@ -149,7 +152,10 @@ module Kitchen
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
           }
-          $null = #{config[:configuration_name]} -outputpath c:/configurations #{'-configurationdata $' + config[:configuration_data_variable] if config[:configuration_data_variable]}
+
+          #{'$ConfigurationData = ' + ps_hash(config[:configuration_data]) unless config[:configuration_data].nil?}
+
+          $null = #{config[:configuration_name]} -outputpath c:/configurations #{'-configurationdata $' + configuration_data_variable}
         EOH
         debug("Shelling out: #{stage_resources_and_generate_mof_script}")
         wrap_shell_code(stage_resources_and_generate_mof_script)
@@ -227,6 +233,23 @@ module Kitchen
 
       def sandboxed_configuration_script
         File.join('configuration', config[:configuration_script])
+      end
+
+      def pad(depth = 0)
+        " " * depth
+      end
+
+      def ps_hash(obj, depth = 0)
+        if obj.is_a?(Hash)
+          obj.map { |k, v|
+            %{#{pad(depth + 2)}#{ps_hash(k)} = #{ps_hash(v, depth + 2)}}
+          }.join(";\n").insert(0, "@{\n").insert(-1, "\n#{pad(depth)}}")
+        elsif obj.is_a?(Array)
+          array_string = obj.map { |v| ps_hash(v, depth+4)}.join(",")
+          "#{pad(depth)}@(\n#{array_string}\n)"
+        else
+          %{"#{obj}"}
+        end
       end
 
       def prepare_configuration_script
