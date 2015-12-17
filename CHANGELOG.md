@@ -1,3 +1,8 @@
+## 0.5.0
+
+- [PR #9](https://github.com/test-kitchen/kitchen-dsc/pull/9) ConfigurationData in the .kitchen.yml
+- Revert Enable-DscDebug
+
 ## 0.4.1
 
 - Add Enable-DscDebug for WMF 5 systems
