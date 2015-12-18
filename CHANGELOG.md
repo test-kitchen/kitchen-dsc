@@ -1,3 +1,8 @@
+## 0.6.0
+
+- [PR #10](https://github.com/test-kitchen/kitchen-dsc/pull/10) Fail kitchen run with DSC LCM returns error(s).
+- Updated README.md with documentation of ConfigurationData
+
 ## 0.5.0
 
 - [PR #9](https://github.com/test-kitchen/kitchen-dsc/pull/9) ConfigurationData in the .kitchen.yml
