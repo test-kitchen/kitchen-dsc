@@ -28,7 +28,7 @@ module Kitchen
         provisioner.instance.suite.name
       end
 
-      default_config :configuration_data_variable
+      default_config :configuration_data_variable, 'ConfigurationData'
       default_config :configuration_data
 
       default_config :dsc_local_configuration_manager_version, 'wmf4'
@@ -153,7 +153,7 @@ module Kitchen
             throw "Failed to create a configuration command #{config[:configuration_name]}"
           }
 
-          #{'$ConfigurationData = ' + ps_hash(config[:configuration_data]) unless config[:configuration_data].nil?}
+          #{configuration_data_assignment unless config[:configuration_data].nil?}
 
           $null = #{config[:configuration_name]} -outputpath c:/configurations #{'-configurationdata $' + configuration_data_variable}
         EOH
@@ -162,12 +162,22 @@ module Kitchen
       end
       # rubocop:enable Metrics/LineLength
 
+      def configuration_data_assignment
+        '$' + configuration_data_variable + ' = ' + ps_hash(config[:configuration_data])
+      end
+
       def run_command
         info("Running the configuration #{config[:configuration_name]}")
         run_configuration_script = <<-EOH
+          $ProgressPreference = 'SilentlyContinue'
           $job = start-dscconfiguration -Path c:/configurations/ -force
           $job | wait-job
           $job.childjobs[0].verbose
+          $dsc_errors = $job.childjobs[0].Error
+          if ($dsc_errors -ne $null) {
+            $dsc_errors
+            exit 1
+          }
         EOH
 
         debug("Shelling out: #{run_configuration_script}")
