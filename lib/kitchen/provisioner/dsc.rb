@@ -165,9 +165,15 @@ module Kitchen
       def run_command
         info("Running the configuration #{config[:configuration_name]}")
         run_configuration_script = <<-EOH
+          $ProgressPreference = 'SilentlyContinue'
           $job = start-dscconfiguration -Path c:/configurations/ -force
           $job | wait-job
           $job.childjobs[0].verbose
+          $dsc_errors = $job.childjobs[0].Error
+          if ($dsc_errors -ne $null) {
+            $dsc_errors
+            exit 1
+          }
         EOH
 
         debug("Shelling out: #{run_configuration_script}")
