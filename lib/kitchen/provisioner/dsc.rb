@@ -58,7 +58,7 @@ module Kitchen
                 ConfigurationMode = '#{lcm_config[:configuration_mode]}'
                 ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '30' : lcm_config[:configuration_mode_frequency_mins]}
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm_config[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
@@ -76,7 +76,7 @@ module Kitchen
                 ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '30' : lcm_config[:configuration_mode_frequency_mins]}
                 DebugMode = '#{lcm_config[:debug_mode]}'
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '15' : lcm_config[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
@@ -94,7 +94,7 @@ module Kitchen
                 ConfigurationModeFrequencyMins = #{lcm_config[:configuration_mode_frequency_mins].nil? ? '15' : lcm_config[:configuration_mode_frequency_mins]}
                 DebugMode = '#{lcm_config[:debug_mode]}'
                 RebootNodeIfNeeded = [bool]::Parse('#{lcm_config[:reboot_if_needed]}')
-                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '30' : lcm[:refresh_frequency_mins]}
+                RefreshFrequencyMins = #{lcm_config[:refresh_frequency_mins].nil? ? '30' : lcm_config[:refresh_frequency_mins]}
                 RefreshMode = '#{lcm_config[:refresh_mode]}'
               }
             }
