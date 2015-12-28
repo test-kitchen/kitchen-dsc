@@ -1,3 +1,6 @@
+# 0.6.1
+- [PR #11](https://github.com/test-kitchen/kitchen-dsc/pull/11) Few typos thanks to [PrahlM93](https://github.com/PrahlM93)
+
 ## 0.6.0
 
 - [PR #10](https://github.com/test-kitchen/kitchen-dsc/pull/10) Fail kitchen run with DSC LCM returns error(s).
