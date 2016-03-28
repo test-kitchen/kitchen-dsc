@@ -112,6 +112,7 @@ module Kitchen
       # rubocop:enable Metrics/LineLength
 
       def init_command
+        wrap_shell_code("mkdir (split-path (join-path #{config[:root_path]} #{sandboxed_configuration_script})) -force | out-null")
       end
 
       def create_sandbox
