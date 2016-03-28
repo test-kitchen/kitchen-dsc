@@ -129,7 +129,6 @@ module Kitchen
       # Disable line length check, it is all logging and embedded script.
       # rubocop:disable Metrics/LineLength
       def prepare_command
-        configuration_data_variable = config[:configuration_data_variable].nil? ? 'ConfigurationData' : config[:configuration_data_variable]
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
@@ -161,6 +160,10 @@ module Kitchen
         wrap_shell_code(stage_resources_and_generate_mof_script)
       end
       # rubocop:enable Metrics/LineLength
+
+      def configuration_data_variable
+        config[:configuration_data_variable].nil? ? 'ConfigurationData' : config[:configuration_data_variable]
+      end
 
       def configuration_data_assignment
         '$' + configuration_data_variable + ' = ' + ps_hash(config[:configuration_data])
