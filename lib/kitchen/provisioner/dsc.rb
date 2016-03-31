@@ -31,6 +31,8 @@ module Kitchen
       default_config :configuration_data_variable, 'ConfigurationData'
       default_config :configuration_data
 
+      default_config :modules_from_gallery
+
       default_config :dsc_local_configuration_manager_version, 'wmf4'
       default_config :dsc_local_configuration_manager, {
         action_after_reboot: 'StopConfiguration',
@@ -111,8 +113,35 @@ module Kitchen
       end
       # rubocop:enable Metrics/LineLength
 
+      def setup_config_directory_script
+        "mkdir (split-path (join-path #{config[:root_path]} #{sandboxed_configuration_script})) -force | out-null"
+      end
+
+      def powershell_modules
+        config[:modules_from_gallery].map do |powershell_module|
+          "install-module '#{powershell_module}'"
+        end
+      end
+
+      def install_module_script
+        return if config[:modules_from_gallery].nil?
+        script = <<-EOH
+  install-packageprovider nuget -force -forcebootstrap
+  #{powershell_modules.join("\n")}
+        EOH
+      end
+
+      def install_modules?
+        config[:dsc_local_configuration_manager_version] == 'wmf5' &&
+          !config[:modules_from_gallery].nil?
+      end
+
       def init_command
-        wrap_shell_code("mkdir (split-path (join-path #{config[:root_path]} #{sandboxed_configuration_script})) -force | out-null")
+        script = <<-EOH
+#{setup_config_directory_script}
+#{install_module_script if install_modules?}
+        EOH
+        wrap_shell_code(script)
       end
 
       def create_sandbox
