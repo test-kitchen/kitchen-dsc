@@ -1,5 +1,6 @@
 # 0.8.0
   - PS Gallery Support
+  - Fixed individual overrides for LCM settings
 
 # 0.7.0
  - Fixed configuration_data_variable

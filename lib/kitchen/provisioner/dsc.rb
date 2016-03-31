@@ -34,20 +34,42 @@ module Kitchen
       default_config :modules_from_gallery
 
       default_config :dsc_local_configuration_manager_version, 'wmf4'
-      default_config :dsc_local_configuration_manager, {
-        action_after_reboot: 'StopConfiguration',
-        allow_module_overwrite: false,
-        certificate_id: nil,
-        configuration_mode: 'ApplyAndAutoCorrect',
-        debug_mode: 'All',
-        reboot_if_needed: false,
-        refresh_mode: 'PUSH'
-      }
+      default_config :dsc_local_configuration_manager
+
+      def override_lcm_setting?(name)
+        if config[:dsc_local_configuration_manager].nil? ||
+           config[:dsc_local_configuration_manager][name.to_sym].nil?
+          false
+        else
+          true
+        end
+      end
+
+      def resolve_lcm_setting(name, default_value)
+        if override_lcm_setting? name
+          config[:dsc_local_configuration_manager][name.to_sym]
+        else
+          default_value
+        end
+      end
+
+      def lcm_settings
+        {
+          action_after_reboot: (resolve_lcm_setting 'action_after_reboot', 'StopConfiguration'),
+          allow_module_overwrite: (resolve_lcm_setting 'allow_module_overwrite', false),
+          certificate_id: (resolve_lcm_setting 'certificate_id', nil),
+          configuration_mode: (resolve_lcm_setting 'configuration_mode', 'ApplyAndAutoCorrect'),
+          debug_mode: (resolve_lcm_setting 'debug_mode', 'All'),
+          reboot_if_needed: (resolve_lcm_setting 'reboot_if_needed', false),
+          refresh_mode: (resolve_lcm_setting 'refresh_mode' , 'PUSH')
+        }
+      end
+
 
       # Disable line length check, it is all embedded script.
       # rubocop:disable Metrics/LineLength
       def install_command
-        lcm_config = config[:dsc_local_configuration_manager]
+        lcm_config = lcm_settings
         case config[:dsc_local_configuration_manager_version]
         when 'wmf4_legacy', 'wmf4'
           lcm_configuration_script = <<-LCMSETUP
@@ -85,9 +107,10 @@ module Kitchen
           LCMSETUP
         when 'wmf5'
           lcm_configuration_script = <<-LCMSETUP
+            [DSCLocalConfigurationManager()]
             configuration SetupLCM
             {
-              LocalConfigurationManager
+              Settings
               {
                 ActionAfterReboot = '#{lcm_config[:action_after_reboot]}'
                 AllowModuleOverwrite = [bool]::Parse('#{lcm_config[:allow_module_overwrite]}')
@@ -106,7 +129,7 @@ module Kitchen
         #{lcm_configuration_script}
 
         $null = SetupLCM
-        Set-DscLocalConfigurationManager -Path ./SetupLCM
+        Set-DscLocalConfigurationManager -Path ./SetupLCM | out-null
         EOH
 
         wrap_shell_code(full_lcm_configuration_script)
@@ -118,15 +141,15 @@ module Kitchen
       end
 
       def powershell_modules
-        config[:modules_from_gallery].map do |powershell_module|
-          "install-module '#{powershell_module}'"
+        Array(config[:modules_from_gallery]).map do |powershell_module|
+          "install-module '#{powershell_module}' -force | out-null"
         end
       end
 
       def install_module_script
         return if config[:modules_from_gallery].nil?
         script = <<-EOH
-  install-packageprovider nuget -force -forcebootstrap
+  install-packageprovider nuget -force -forcebootstrap | out-null
   #{powershell_modules.join("\n")}
         EOH
       end
