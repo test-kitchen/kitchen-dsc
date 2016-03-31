@@ -1,5 +1,5 @@
 # 0.8.0
-  - PS Gallery Support
+  - PS Gallery Support (default gallery for now)
   - Fixed individual overrides for LCM settings
 
 # 0.7.0
