@@ -125,12 +125,19 @@ module Kitchen
         end
         info('Staging DSC configuration script for copy to the SUT')
         prepare_configuration_script
+        info('Staging prerequisite script for copy to the SUT')
+        prepare_prerequisite_script
       end
 
       # Disable line length check, it is all logging and embedded script.
       # rubocop:disable Metrics/LineLength
       def prepare_command
         info('Moving DSC Resources onto PSModulePath')
+        if !config[:prerequisite_script].nil?
+            prerequisite_script = File.basename(config[:prerequisite_script])
+            run_prerequisite_script_command = ['&(Join-Path "', config[:root_path], '" -ChildPath "prerequisites" | Join-Path -ChildPath "', prerequisite_script, '")'].join
+            info("Running the prerequisite script #{prerequisite_script}")
+        end
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
           if (Test-Path (join-path #{config[:root_path]} 'modules'))
@@ -138,6 +145,9 @@ module Kitchen
             dir ( join-path #{config[:root_path]} 'modules/*') -directory |
               copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
           }
+          
+          #{run_prerequisite_script_command unless run_prerequisite_script_command.nil?}
+            
           if (-not (test-path 'c:/configurations'))
           {
             mkdir 'c:/configurations' | out-null
@@ -271,8 +281,21 @@ module Kitchen
         configuration_script_path = File.join(config[:kitchen_root], configuration_script_file)
         sandbox_configuration_script_path = File.join(sandbox_path, sandboxed_configuration_script)
         FileUtils.mkdir_p(File.dirname(sandbox_configuration_script_path))
-        debug("Moving #{configuration_script_path} to #{sandbox_configuration_script_path}")
+        debug("Copying #{configuration_script_path} to #{sandbox_configuration_script_path}")
         FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
+      end
+
+      def prepare_prerequisite_script
+        if !config[:prerequisite_script].nil?
+          prerequisite_script = File.expand_path(config[:prerequisite_script])
+          sandbox_prerequisite_folder = File.join(sandbox_path, 'prerequisites')
+          sandbox_prerequisite_script_path = File.join(sandbox_prerequisite_folder, File.basename(prerequisite_script))
+          FileUtils.mkdir_p(sandbox_prerequisite_folder)
+          debug("Copying #{prerequisite_script} to #{sandbox_prerequisite_script_path}")
+          FileUtils.cp(prerequisite_script, sandbox_prerequisite_script_path)
+        else
+          debug("The prerequisite script will not be copied over or run because prerequisite_script was not defined")
+        end
       end
     end
   end

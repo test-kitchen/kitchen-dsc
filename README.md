@@ -57,6 +57,9 @@ You will see a delay in the return of the run details due to an difference in ho
     * refresh_frequency_mins = 15               # 30 on wmf5
     * refresh_mode = 'PUSH'
 
+* prerequisite_script
+  * Path to a prerequisite PowerShell script that will run after the module has been copied to C:\Program Files\WindowsPowerShell\Modules but before the DSC configuration is run
+
 ### Specific to repository style testing
 * modules_path
   * Defaults to 'modules'.
