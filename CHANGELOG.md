@@ -1,3 +1,10 @@
+# 0.8.0
+  - PS Gallery Support (default gallery for now)
+  - Fixed individual overrides for LCM settings
+
+# 0.7.0
+ - Fixed configuration_data_variable
+
 # 0.6.1
 - [PR #11](https://github.com/test-kitchen/kitchen-dsc/pull/11) Few typos thanks to [PrahlM93](https://github.com/PrahlM93)
 

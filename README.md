@@ -49,6 +49,7 @@ You will see a delay in the return of the run details due to an difference in ho
   * Settings for the LCM
   * Defaults are:
     * action_after_reboot = 'StopConfiguration' # wmf4_with_update or wmf5
+    * reboot_if_needed = false
     * allow_module_overwrite = false
     * certificate_id = nil
     * configuration_mode = 'ApplyAndAutoCorrect'
@@ -57,8 +58,36 @@ You will see a delay in the return of the run details due to an difference in ho
     * refresh_frequency_mins = 15               # 30 on wmf5
     * refresh_mode = 'PUSH'
 
+* modules_from_gallery
+  * Requires WMF 5
+  * Takes a string (for one module) or an array (for multiple) to install from the gallery
+
 ### Specific to repository style testing
 * modules_path
   * Defaults to 'modules'.
   * Points to the location of modules containing DSC resources to upload
   * This path is relative to the root of the repository (the location of the .kitchen.yml).
+
+## Example 
+
+```yaml
+provisioner:
+  - name: dsc
+    dsc_local_configuration_manager_version: wmf5
+    dsc_local_configuration_manager:
+      reboot_if_needed: true
+      debug_mode: none
+    configuration_script_folder: .
+    configuration_script: SampleConfig.ps1
+    modules_from_gallery:
+      - xWebAdministration
+      - xComputerManagement
+
+suite:
+  - name: test
+    provisioner:
+      configuration_data:
+        AllNodes:
+          - nodename: localhost
+            role: webserver
+```
