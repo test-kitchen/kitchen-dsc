@@ -61,6 +61,10 @@ You will see a delay in the return of the run details due to an difference in ho
 * modules_from_gallery
   * Requires WMF 5
   * Takes a string (for one module) or an array (for multiple) to install from the gallery
+  * Or takes a hash with keys matching the parameters for install-module.  
+    * Name is required.  
+    * Force is automatically used and not required as part of the hash table.
+    * Repository defaults to either PSGallery or any custom feed defined, but can be overriden here.
 
 * gallery_name
   * Custom PowerShell gallery name to install modules from.
@@ -86,9 +90,13 @@ provisioner:
       debug_mode: none
     configuration_script_folder: .
     configuration_script: SampleConfig.ps1
+    gallery_uri: https://ci.appveyor.com/nuget/xWebAdministration
+    gallery_name: xWebDevFeed
     modules_from_gallery:
       - xWebAdministration
-      - xComputerManagement
+      - name: xComputerManagement
+        requiredversion: 1.4.0.0
+        repository: PSGallery
 
 suite:
   - name: test
