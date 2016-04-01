@@ -141,8 +141,19 @@ module Kitchen
 
       def powershell_modules
         Array(config[:modules_from_gallery]).map do |powershell_module|
-          info("Installing #{powershell_module} from #{psmodule_repository_name}.")
-          "install-module '#{powershell_module}' -Repository #{psmodule_repository_name} -force | out-null"
+          params = if powershell_module.is_a? Hash
+                     keys = powershell_module.keys.reject { |k| k.to_s.downcase! == 'force' }
+                     unless keys.any? { |k| k.to_s.downcase! == 'repository' }
+                       keys.push(:repository)
+                       powershell_module[:repository] = psmodule_repository_name
+                     end
+                     keys.map do |key|
+                       "-#{key} #{powershell_module[key]}"
+                     end.join(' ')
+                   else
+                     "-name '#{powershell_module}' -Repository -Repository #{psmodule_repository_name}"
+                   end
+          "install-module #{params} -force | out-null"
         end
       end
 
