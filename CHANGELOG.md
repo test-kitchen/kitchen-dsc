@@ -1,3 +1,6 @@
+# 0.8.1
+  - Custom gallery support (existing named galleries or register new ones).
+
 # 0.8.0
   - PS Gallery Support (default gallery for now)
   - Fixed individual overrides for LCM settings

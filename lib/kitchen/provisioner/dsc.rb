@@ -13,7 +13,6 @@ require 'kitchen/provisioner/base'
 require 'kitchen/util'
 
 module Kitchen
-
   module Provisioner
     class Dsc < Base
       kitchen_provisioner_api_version 2
@@ -31,6 +30,9 @@ module Kitchen
       default_config :configuration_data_variable, 'ConfigurationData'
       default_config :configuration_data
 
+      default_config :nuget_force_bootstrap, true
+      default_config :gallery_uri
+      default_config :gallery_name
       default_config :modules_from_gallery
 
       default_config :dsc_local_configuration_manager_version, 'wmf4'
@@ -61,13 +63,10 @@ module Kitchen
           configuration_mode: (resolve_lcm_setting 'configuration_mode', 'ApplyAndAutoCorrect'),
           debug_mode: (resolve_lcm_setting 'debug_mode', 'All'),
           reboot_if_needed: (resolve_lcm_setting 'reboot_if_needed', false),
-          refresh_mode: (resolve_lcm_setting 'refresh_mode' , 'PUSH')
+          refresh_mode: (resolve_lcm_setting 'refresh_mode', 'PUSH')
         }
       end
 
-
-      # Disable line length check, it is all embedded script.
-      # rubocop:disable Metrics/LineLength
       def install_command
         lcm_config = lcm_settings
         case config[:dsc_local_configuration_manager_version]
@@ -142,14 +141,34 @@ module Kitchen
 
       def powershell_modules
         Array(config[:modules_from_gallery]).map do |powershell_module|
-          "install-module '#{powershell_module}' -force | out-null"
+          info("Installing #{powershell_module} from #{psmodule_repository_name}.")
+          "install-module '#{powershell_module}' -Repository #{psmodule_repository_name} -force | out-null"
         end
+      end
+
+      def nuget_force_bootstrap
+        return unless config[:nuget_force_bootstrap]
+        info('Bootstrapping the nuget package provider for PowerShell PackageManagement.')
+        'install-packageprovider nuget -force -forcebootstrap | out-null'
+      end
+
+      def psmodule_repository_name
+        return 'PSGallery' if config[:gallery_name].nil? && config[:gallery_uri].nil?
+        return 'testing'   if config[:gallery_name].nil?
+        config[:gallery_name]
+      end
+
+      def register_psmodule_repository
+        return if config[:gallery_uri].nil?
+        info("Registering a new PowerShellGet Repository - #{psmodule_repository_name}")
+        "register-packagesource -providername PowerShellGet -name '#{psmodule_repository_name}' -location '#{config[:gallery_uri]}' -force -trusted"
       end
 
       def install_module_script
         return if config[:modules_from_gallery].nil?
-        script = <<-EOH
-  install-packageprovider nuget -force -forcebootstrap | out-null
+        <<-EOH
+  #{nuget_force_bootstrap}
+  #{register_psmodule_repository}
   #{powershell_modules.join("\n")}
         EOH
       end
@@ -179,8 +198,6 @@ module Kitchen
         prepare_configuration_script
       end
 
-      # Disable line length check, it is all logging and embedded script.
-      # rubocop:disable Metrics/LineLength
       def prepare_command
         info('Moving DSC Resources onto PSModulePath')
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
@@ -259,7 +276,7 @@ module Kitchen
       def list_files(path)
         base_directory_content = Dir.glob(File.join(path, '*'))
         nested_directory_content = Dir.glob(File.join(path, '*/**/*'))
-        all_directory_content =([base_directory_content, nested_directory_content]).flatten
+        all_directory_content = [base_directory_content, nested_directory_content].flatten
 
         ignore_files = ['Gemfile', 'Gemfile.lock', 'README.md', 'LICENSE.txt']
         all_directory_content.reject do |f|
@@ -290,10 +307,10 @@ module Kitchen
         sandbox_module_path = File.join(sandbox_path, 'modules')
 
         if Dir.exist?(module_path)
-            debug("Moving #{module_path} to #{sandbox_module_path}")
-            FileUtils.cp_r(module_path, sandbox_module_path)
+          debug("Moving #{module_path} to #{sandbox_module_path}")
+          FileUtils.cp_r(module_path, sandbox_module_path)
         else
-            debug("The modules path #{module_path} was not found. Not moving to #{sandbox_module_path}.")
+          debug("The modules path #{module_path} was not found. Not moving to #{sandbox_module_path}.")
         end
       end
 
@@ -302,19 +319,19 @@ module Kitchen
       end
 
       def pad(depth = 0)
-        " " * depth
+        ' ' * depth
       end
 
       def ps_hash(obj, depth = 0)
         if obj.is_a?(Hash)
-          obj.map { |k, v|
-            %{#{pad(depth + 2)}#{ps_hash(k)} = #{ps_hash(v, depth + 2)}}
-          }.join(";\n").insert(0, "@{\n").insert(-1, "\n#{pad(depth)}}")
+          obj.map do |k, v|
+            %(#{pad(depth + 2)}#{ps_hash(k)} = #{ps_hash(v, depth + 2)})
+          end.join(";\n").insert(0, "@{\n").insert(-1, "\n#{pad(depth)}}")
         elsif obj.is_a?(Array)
-          array_string = obj.map { |v| ps_hash(v, depth+4)}.join(",")
+          array_string = obj.map { |v| ps_hash(v, depth + 4) }.join(',')
           "#{pad(depth)}@(\n#{array_string}\n)"
         else
-          %{"#{obj}"}
+          %("#{obj}")
         end
       end
 
