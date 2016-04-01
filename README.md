@@ -62,6 +62,13 @@ You will see a delay in the return of the run details due to an difference in ho
   * Requires WMF 5
   * Takes a string (for one module) or an array (for multiple) to install from the gallery
 
+* gallery_name
+  * Custom PowerShell gallery name to install modules from.
+  * If there is no package source with this name registered on the machine, then gallery_uri must be configured as well.
+
+* gallery_uri
+  * URI for a custom PowerShell gallery feed.
+
 ### Specific to repository style testing
 * modules_path
   * Defaults to 'modules'.
