@@ -151,7 +151,7 @@ module Kitchen
                        "-#{key} #{powershell_module[key]}"
                      end.join(' ')
                    else
-                     "-name '#{powershell_module}' -Repository -Repository #{psmodule_repository_name}"
+                     "-name '#{powershell_module}' -Repository #{psmodule_repository_name}"
                    end
           "install-module #{params} -force | out-null"
         end
