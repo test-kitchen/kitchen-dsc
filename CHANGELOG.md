@@ -1,3 +1,6 @@
+# 0.8.3
+  - [PR #16](https://github.com/test-kitchen/kitchen-dsc/pull/16) Remove duplicate parameter.
+  
 # 0.8.1
   - Custom gallery support (existing named galleries or register new ones).
 
