@@ -251,12 +251,21 @@ module Kitchen
       end
 
       def run_command
+        config[:retry_on_exit_code] = [35] if config[:retry_on_exit_code].empty?
+        config[:max_retries] = 3 if config[:max_retries] == 1
+
         info("Running the configuration #{config[:configuration_name]}")
         run_configuration_script = <<-EOH
           $ProgressPreference = 'SilentlyContinue'
           $job = start-dscconfiguration -Path c:/configurations/ -force
           $job | wait-job
-          $job.childjobs[0].verbose
+          $verbose_output = $job.childjobs[0].verbose
+          $verbose_output
+          if ($verbose_output -match 'A reboot is required to progress further. Please reboot the system.') {
+            "A reboot is required to continue."
+            shutdown /r /t 15
+            exit 35
+          }
           $dsc_errors = $job.childjobs[0].Error
           if ($dsc_errors -ne $null) {
             $dsc_errors

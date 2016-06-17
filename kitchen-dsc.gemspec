@@ -26,7 +26,7 @@ DSC Provisioner for Test Kitchen
 TBD
 
 EOF
-  s.add_dependency 'test-kitchen', '~> 1.4'
+  s.add_dependency 'test-kitchen', '~> 1.10'
 
   s.add_development_dependency 'countloc', '~> 0.4'
   s.add_development_dependency 'rake'
