@@ -1,3 +1,6 @@
+# 0.9.0
+  = [PR #19](https://github.com/test-kitchen/kitchen-dsc/pull/19) Support LCM reboot requests
+
 # 0.8.3
   - [PR #16](https://github.com/test-kitchen/kitchen-dsc/pull/16) Remove duplicate parameter.
   
