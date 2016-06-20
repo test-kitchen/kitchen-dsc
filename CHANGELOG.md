@@ -1,3 +1,6 @@
+# 0.9.2
+  - quick syntax bug fix
+
 # 0.9.1
   - [PR #21](https://github.com/test-kitchen/kitchen-dsc/pull/21) Silence ProgressPreference
 
