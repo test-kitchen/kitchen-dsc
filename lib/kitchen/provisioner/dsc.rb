@@ -279,7 +279,7 @@ module Kitchen
       private
 
       def wrap_powershell_code(code)
-        wrap_shell_code(["$ProgressPreference = 'SilentlyContinue';"], code].join("\n"))
+        wrap_shell_code( [ "$ProgressPreference = 'SilentlyContinue';", code ].join("\n") )
       end
 
       def powershell_module?
