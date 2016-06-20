@@ -131,7 +131,7 @@ module Kitchen
         Set-DscLocalConfigurationManager -Path ./SetupLCM | out-null
         EOH
 
-        wrap_shell_code(full_lcm_configuration_script)
+        wrap_powershell_code(full_lcm_configuration_script)
       end
       # rubocop:enable Metrics/LineLength
 
@@ -194,13 +194,13 @@ module Kitchen
 #{setup_config_directory_script}
 #{install_module_script if install_modules?}
         EOH
-        wrap_shell_code(script)
+        wrap_powershell_code(script)
       end
 
       def create_sandbox
         super
         info('Staging DSC Resource Modules for copy to the SUT')
-        if resource_module? || class_resource_module?
+        if powershell_module?
           prepare_resource_style_directory
         else
           prepare_repo_style_directory
@@ -238,7 +238,7 @@ module Kitchen
           $null = #{config[:configuration_name]} -outputpath c:/configurations #{'-configurationdata $' + configuration_data_variable}
         EOH
         debug("Shelling out: #{stage_resources_and_generate_mof_script}")
-        wrap_shell_code(stage_resources_and_generate_mof_script)
+        wrap_powershell_code(stage_resources_and_generate_mof_script)
       end
       # rubocop:enable Metrics/LineLength
 
@@ -256,7 +256,6 @@ module Kitchen
 
         info("Running the configuration #{config[:configuration_name]}")
         run_configuration_script = <<-EOH
-          $ProgressPreference = 'SilentlyContinue'
           $job = start-dscconfiguration -Path c:/configurations/ -force
           $job | wait-job
           $verbose_output = $job.childjobs[0].verbose
@@ -274,23 +273,18 @@ module Kitchen
         EOH
 
         debug("Shelling out: #{run_configuration_script}")
-        wrap_shell_code(run_configuration_script)
+        wrap_powershell_code(run_configuration_script)
       end
 
       private
 
-      def resource_module?
-        module_metadata_file = File.join(config[:kitchen_root], "#{module_name}.psd1")
-        module_dsc_resource_folder = File.join(config[:kitchen_root], 'DSCResources')
-        File.exist?(module_metadata_file) &&
-          File.exist?(module_dsc_resource_folder)
+      def wrap_powershell_code(code)
+        wrap_shell_code(["$ProgressPreference = 'SilentlyContinue';"], code].join("\n"))
       end
 
-      def class_resource_module?
+      def powershell_module?
         module_metadata_file = File.join(config[:kitchen_root], "#{module_name}.psd1")
-        module_dsc_resource_folder = File.join(config[:kitchen_root], 'DSCResources')
-        File.exist?(module_metadata_file) &&
-          !File.exist?(module_dsc_resource_folder)
+        File.exist?(module_metadata_file)
       end
 
       def list_files(path)
