@@ -144,10 +144,9 @@ module Kitchen
           params = if powershell_module.is_a? Hash
                      keys = powershell_module.keys.reject { |k| k.to_s.downcase! == 'force' }
                      unless keys.any? { |k| k.to_s.downcase! == 'repository' }
-                       keys.push(:repository)
                        powershell_module[:repository] = psmodule_repository_name
                      end
-                     keys.map do |key|
+                     powershell_module.keys.map do |key|
                        "-#{key} #{powershell_module[key]}"
                      end.join(' ')
                    else
