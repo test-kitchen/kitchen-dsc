@@ -1,3 +1,6 @@
+# 0.9.3
+  - [PR #24](https://github.com/test-kitchen/kitchen-dsc/pull/24) Fix install-module repository param resolution
+
 # 0.9.2
   - quick syntax bug fix
 
