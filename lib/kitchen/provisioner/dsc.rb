@@ -139,17 +139,19 @@ module Kitchen
         "mkdir (split-path (join-path #{config[:root_path]} #{sandboxed_configuration_script})) -force | out-null"
       end
 
+      def powershell_module_params(module_specification_hash)
+        keys = module_specification_hash.keys.reject { |k| k.to_s.casecmp('force') == 0 }
+        unless keys.any? { |k| k.to_s.downcase == 'repository' }
+          keys.push(:repository)
+          module_specification_hash[:repository] = psmodule_repository_name
+        end
+        keys.map { |key| "-#{key} #{module_specification_hash[key]}" }.join(' ')
+      end
+
       def powershell_modules
         Array(config[:modules_from_gallery]).map do |powershell_module|
           params = if powershell_module.is_a? Hash
-                     keys = powershell_module.keys.reject { |k| k.to_s.downcase! == 'force' }
-                     unless keys.any? { |k| k.to_s.downcase! == 'repository' }
-                       keys.push(:repository)
-                       powershell_module[:repository] = psmodule_repository_name
-                     end
-                     keys.map do |key|
-                       "-#{key} #{powershell_module[key]}"
-                     end.join(' ')
+                     powershell_module_params(powershell_module)
                    else
                      "-name '#{powershell_module}' -Repository #{psmodule_repository_name}"
                    end
