@@ -1,3 +1,9 @@
+# 0.10.0
+  - [PR #25](https://github.com/test-kitchen/kitchen-dsc/pull/25) Extract DSC LCM Configuration
+
+# 0.9.3
+  - [PR #24](https://github.com/test-kitchen/kitchen-dsc/pull/24) Fix install-module repository param resolution
+
 # 0.9.3
   - [PR #24](https://github.com/test-kitchen/kitchen-dsc/pull/24) Fix install-module repository param resolution
 
