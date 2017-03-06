@@ -79,6 +79,7 @@ module Kitchen
         info("Moving DSC Resources onto PSModulePath")
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
+          Remove-Item -Recurse -Force c:/configurations
           if (Test-Path (join-path #{config[:root_path]} 'modules'))
           {
             dir ( join-path #{config[:root_path]} 'modules/*') -directory |
