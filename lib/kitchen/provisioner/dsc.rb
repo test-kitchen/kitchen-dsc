@@ -95,7 +95,12 @@ module Kitchen
             throw "Failed to find $ConfigurationScriptPath"
           }
           invoke-expression (get-content $ConfigurationScriptPath -raw) -ErrorVariable errors
-          $errors
+          
+          if($errors -ne $null)
+          {
+            exit 1
+          }
+          
           if (-not (get-command #{config[:configuration_name]}))
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
