@@ -79,6 +79,9 @@ module Kitchen
         info("Moving DSC Resources onto PSModulePath")
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
+
+          $Error.clear()
+
           Remove-Item -Recurse -Force c:/configurations
           if (Test-Path (join-path #{config[:root_path]} 'modules'))
           {
@@ -94,13 +97,8 @@ module Kitchen
           {
             throw "Failed to find $ConfigurationScriptPath"
           }
-          invoke-expression (get-content $ConfigurationScriptPath -raw) -ErrorVariable errors
-          
-          if($errors -ne $null)
-          {
-            exit 1
-          }
-          
+          invoke-expression (get-content $ConfigurationScriptPath -raw)
+
           if (-not (get-command #{config[:configuration_name]}))
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
@@ -108,7 +106,18 @@ module Kitchen
 
           #{configuration_data_assignment unless config[:configuration_data].nil?}
 
-          $null = #{config[:configuration_name]} -outputpath c:/configurations #{"-configurationdata $" + configuration_data_variable}
+          try{
+            $null = #{config[:configuration_name]} -outputpath c:/configurations #{"-configurationdata $" + configuration_data_variable}
+          }
+          catch{
+          }
+
+          if($Error -ne $null)
+          {
+            $Error[-1]
+            exit 1
+          }
+
         EOH
         debug("Shelling out: #{stage_resources_and_generate_mof_script}")
         wrap_powershell_code(stage_resources_and_generate_mof_script)
