@@ -80,9 +80,13 @@ module Kitchen
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
 
+          if(Test-Path c:/configurations)
+          {
+              Remove-Item -Recurse -Force c:/configurations
+          }
+
           $Error.clear()
 
-          Remove-Item -Recurse -Force c:/configurations
           if (Test-Path (join-path #{config[:root_path]} 'modules'))
           {
             dir ( join-path #{config[:root_path]} 'modules/*') -directory |
