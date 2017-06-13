@@ -79,6 +79,8 @@ module Kitchen
         info("Moving DSC Resources onto PSModulePath")
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
+          $ConfigurationName = "#{config[:configuration_name]}"
+          
           if (Test-Path (join-path #{config[:root_path]} 'modules'))
           {
             dir ( join-path #{config[:root_path]} 'modules/*') -directory |
@@ -93,7 +95,7 @@ module Kitchen
           {
             throw "Failed to find $ConfigurationScriptPath"
           }
-          invoke-expression (get-content $ConfigurationScriptPath -raw)
+          . $ConfigurationScriptPath
           if (-not (get-command #{config[:configuration_name]}))
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
@@ -258,7 +260,8 @@ module Kitchen
       end
 
       def sandboxed_configuration_script
-        File.join("configuration", config[:configuration_script])
+        configuration_script_file = File.join(config[:configuration_script_folder], config[:configuration_script])
+        File.join('configuration', configuration_script_file)
       end
 
       def pad(depth = 0)
@@ -279,12 +282,12 @@ module Kitchen
       end
 
       def prepare_configuration_script
-        configuration_script_file = File.join(config[:configuration_script_folder], config[:configuration_script])
-        configuration_script_path = File.join(config[:kitchen_root], configuration_script_file)
-        sandbox_configuration_script_path = File.join(sandbox_path, sandboxed_configuration_script)
-        FileUtils.mkdir_p(File.dirname(sandbox_configuration_script_path))
-        debug("Moving #{configuration_script_path} to #{sandbox_configuration_script_path}")
-        FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
+        sandbox_configuration_path = File.join(sandbox_path, 'configuration')
+        sandbox_configuration_path_folder = File.join(sandbox_configuration_path, config[:configuration_script_folder])
+        configuration_path = File.join(config[:kitchen_root], config[:configuration_script_folder])
+        FileUtils.mkdir_p(sandbox_configuration_path_folder)
+        debug("Moving #{configuration_path} to #{sandbox_configuration_path_folder}")
+        FileUtils.cp_r(configuration_path, sandbox_configuration_path_folder)
       end
     end
   end
