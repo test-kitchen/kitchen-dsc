@@ -79,8 +79,6 @@ module Kitchen
         info("Moving DSC Resources onto PSModulePath")
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
-          $ConfigurationName = "#{config[:configuration_name]}"
-          
           if (Test-Path (join-path #{config[:root_path]} 'modules'))
           {
             dir ( join-path #{config[:root_path]} 'modules/*') -directory |
@@ -95,7 +93,7 @@ module Kitchen
           {
             throw "Failed to find $ConfigurationScriptPath"
           }
-          . $ConfigurationScriptPath
+          invoke-expression (get-content $ConfigurationScriptPath -raw)
           if (-not (get-command #{config[:configuration_name]}))
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
@@ -260,8 +258,7 @@ module Kitchen
       end
 
       def sandboxed_configuration_script
-        configuration_script_file = File.join(config[:configuration_script_folder], config[:configuration_script])
-        File.join('configuration', configuration_script_file)
+        File.join("configuration", config[:configuration_script])
       end
 
       def pad(depth = 0)
@@ -283,11 +280,12 @@ module Kitchen
 
       def prepare_configuration_script
         sandbox_configuration_path = File.join(sandbox_path, 'configuration')
-        sandbox_configuration_path_folder = File.join(sandbox_configuration_path, config[:configuration_script_folder])
-        configuration_path = File.join(config[:kitchen_root], config[:configuration_script_folder])
-        FileUtils.mkdir_p(sandbox_configuration_path_folder)
-        debug("Moving #{configuration_path} to #{sandbox_configuration_path_folder}")
-        FileUtils.cp_r(configuration_path, sandbox_configuration_path_folder)
+        debug("Local sandbox folder: #{sandbox_configuration_path}")
+        configuration_path = File.join(config[:kitchen_root], "#{config[:configuration_script_folder]}/.")
+        info("Configuration Source folder to copy: #{configuration_path}")
+        FileUtils.mkdir_p(sandbox_configuration_path)
+        debug("Copying #{configuration_path} to #{sandbox_configuration_path}")
+        FileUtils.cp_r(configuration_path, sandbox_configuration_path)
       end
     end
   end
