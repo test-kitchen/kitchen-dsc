@@ -79,6 +79,7 @@ module Kitchen
         info("Moving DSC Resources onto PSModulePath")
         info("Generating the MOF script for the configuration #{config[:configuration_name]}")
         stage_resources_and_generate_mof_script = <<-EOH
+          $configuration_name = #{config[:configuration_name]}
           if (Test-Path (join-path #{config[:root_path]} 'modules'))
           {
             dir ( join-path #{config[:root_path]} 'modules/*') -directory |
@@ -93,7 +94,7 @@ module Kitchen
           {
             throw "Failed to find $ConfigurationScriptPath"
           }
-          invoke-expression (get-content $ConfigurationScriptPath -raw)
+          . $ConfigurationScriptPath
           if (-not (get-command #{config[:configuration_name]}))
           {
             throw "Failed to create a configuration command #{config[:configuration_name]}"
