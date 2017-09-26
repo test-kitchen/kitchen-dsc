@@ -113,7 +113,7 @@ module Kitchen
               throw "Failed to create a configuration command #{configuration}"
             }
   
-            #{configuration_data_assignment(config[:configuration_data]) unless config[:configuration_data].nil?}
+            #{configuration_data_assignment unless config[:configuration_data].nil?}
   
             try{
               $null = #{configuration} -outputpath c:/configurations/#{configuration} #{"-configurationdata $" + configuration_data_variable}
@@ -232,8 +232,8 @@ module Kitchen
         config[:configuration_data_variable].nil? ? "ConfigurationData" : config[:configuration_data_variable]
       end
 
-      def configuration_data_assignment(configuration_data)
-        "$" + configuration_data_variable + " = " + ps_hash(configuration_data)
+      def configuration_data_assignment
+        "$" + configuration_data_variable + " = " + ps_hash(config[:configuration_data])
       end
 
       def wrap_powershell_code(code)
