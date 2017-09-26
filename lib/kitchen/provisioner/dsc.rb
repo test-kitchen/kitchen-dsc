@@ -76,7 +76,15 @@ module Kitchen
 
       def prepare_command
         info("Moving DSC Resources onto PSModulePath")
-        scripts = ''
+        scripts = <<-EOH
+        
+        if (Test-Path (join-path #{config[:root_path]} 'modules'))
+        {
+          dir ( join-path #{config[:root_path]} 'modules/*') -directory |
+          copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
+        }
+
+        EOH
         ensure_array(config[:configuration_name]).each do |configuration|
           info("Generating the MOF script for the configuration #{configuration}")
           stage_resources_and_generate_mof_script = <<-EOH
@@ -88,15 +96,11 @@ module Kitchen
   
             $Error.clear()
   
-            if (Test-Path (join-path #{config[:root_path]} 'modules'))
-            {
-              dir ( join-path #{config[:root_path]} 'modules/*') -directory |
-                copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
-            }
             if (-not (test-path 'c:/configurations'))
             {
               mkdir 'c:/configurations' | out-null
             }
+
             $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
             if (-not (test-path $ConfigurationScriptPath))
             {
