@@ -81,7 +81,7 @@ module Kitchen
           info("Generating the MOF script for the configuration #{configuration}")
           stage_resources_and_generate_mof_script = <<-EOH
   
-            if(Test-Path c:/configurations)
+            if(Test-Path c:/configurations/#{configuration})
             {
                 Remove-Item -Recurse -Force c:/configurations/#{configuration}
             }
