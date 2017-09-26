@@ -84,6 +84,13 @@ module Kitchen
           copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
         }
 
+        $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
+        if (-not (test-path $ConfigurationScriptPath))
+        {
+          throw "Failed to find $ConfigurationScriptPath"
+        }
+        invoke-expression (get-content $ConfigurationScriptPath -raw)
+
         EOH
         ensure_array(config[:configuration_name]).each do |configuration|
           info("Generating the MOF script for the configuration #{configuration}")
@@ -100,13 +107,6 @@ module Kitchen
             {
               mkdir 'c:/configurations' | out-null
             }
-
-            $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
-            if (-not (test-path $ConfigurationScriptPath))
-            {
-              throw "Failed to find $ConfigurationScriptPath"
-            }
-            invoke-expression (get-content $ConfigurationScriptPath -raw)
   
             if (-not (get-command #{configuration}))
             {
