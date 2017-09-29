@@ -25,11 +25,10 @@ module Kitchen
       default_config :configuration_script_folder, "examples"
       default_config :configuration_script, "dsc_configuration.ps1"
       default_config :configuration_name do |provisioner|
-        provisioner.instance.suite.name
+        [provisioner.instance.suite.name]
       end
 
       default_config :configuration_data_variable, "ConfigurationData"
-      default_config :configuration_data
 
       default_config :nuget_force_bootstrap, true
       default_config :gallery_uri
@@ -77,80 +76,90 @@ module Kitchen
 
       def prepare_command
         info("Moving DSC Resources onto PSModulePath")
-        info("Generating the MOF script for the configuration #{config[:configuration_name]}")
-        stage_resources_and_generate_mof_script = <<-EOH
+        scripts = <<-EOH
+        
+        if (Test-Path (join-path #{config[:root_path]} 'modules'))
+        {
+          dir ( join-path #{config[:root_path]} 'modules/*') -directory |
+          copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
+        }
 
-          if(Test-Path c:/configurations)
-          {
-              Remove-Item -Recurse -Force c:/configurations
-          }
-
-          $Error.clear()
-
-          if (Test-Path (join-path #{config[:root_path]} 'modules'))
-          {
-            dir ( join-path #{config[:root_path]} 'modules/*') -directory |
-              copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
-          }
-          if (-not (test-path 'c:/configurations'))
-          {
-            mkdir 'c:/configurations' | out-null
-          }
-          $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
-          if (-not (test-path $ConfigurationScriptPath))
-          {
-            throw "Failed to find $ConfigurationScriptPath"
-          }
-          invoke-expression (get-content $ConfigurationScriptPath -raw)
-
-          if (-not (get-command #{config[:configuration_name]}))
-          {
-            throw "Failed to create a configuration command #{config[:configuration_name]}"
-          }
-
-          #{configuration_data_assignment unless config[:configuration_data].nil?}
-
-          try{
-            $null = #{config[:configuration_name]} -outputpath c:/configurations #{"-configurationdata $" + configuration_data_variable}
-          }
-          catch{
-          }
-
-          if($Error -ne $null)
-          {
-            $Error[-1]
-            exit 1
-          }
+        $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
+        if (-not (test-path $ConfigurationScriptPath))
+        {
+          throw "Failed to find $ConfigurationScriptPath"
+        }
+        invoke-expression (get-content $ConfigurationScriptPath -raw)
 
         EOH
-        debug("Shelling out: #{stage_resources_and_generate_mof_script}")
-        wrap_powershell_code(stage_resources_and_generate_mof_script)
+        ensure_array(config[:configuration_name]).each do |configuration|
+          info("Generating the MOF script for the configuration #{configuration}")
+          stage_resources_and_generate_mof_script = <<-EOH
+  
+            if(Test-Path c:/configurations/#{configuration})
+            {
+                Remove-Item -Recurse -Force c:/configurations/#{configuration}
+            }
+  
+            $Error.clear()
+  
+            if (-not (test-path 'c:/configurations'))
+            {
+              mkdir 'c:/configurations' | out-null
+            }
+  
+            if (-not (get-command #{configuration}))
+            {
+              throw "Failed to create a configuration command #{configuration}"
+            }
+  
+            #{configuration_data_assignment unless config[:configuration_data].nil?}
+  
+            try{
+              $null = #{configuration} -outputpath c:/configurations/#{configuration} #{"-configurationdata $" + configuration_data_variable}
+            }
+            catch{
+            }
+  
+            if($Error -ne $null)
+            {
+              $Error[-1]
+              exit 1
+            }
+  
+          EOH
+          scripts << stage_resources_and_generate_mof_script
+        end
+        debug("Shelling out: #{scripts}")
+        wrap_powershell_code(scripts)
       end
 
       def run_command
         config[:retry_on_exit_code] = [35] if config[:retry_on_exit_code].empty?
         config[:max_retries] = 3 if config[:max_retries] == 1
-
-        info("Running the configuration #{config[:configuration_name]}")
-        run_configuration_script = <<-EOH
-          $job = start-dscconfiguration -Path c:/configurations/ -force
-          $job | wait-job
-          $verbose_output = $job.childjobs[0].verbose
-          $verbose_output
-          if ($verbose_output -match 'A reboot is required to progress further. Please reboot the system.') {
-            "A reboot is required to continue."
-            shutdown /r /t 15
-            exit 35
-          }
-          $dsc_errors = $job.childjobs[0].Error
-          if ($dsc_errors -ne $null) {
-            $dsc_errors
-            exit 1
-          }
-        EOH
-
-        debug("Shelling out: #{run_configuration_script}")
-        wrap_powershell_code(run_configuration_script)
+        scripts = ''
+        ensure_array(config[:configuration_name]).each do |configuration|
+          info("Running the configuration #{configuration}")
+          run_configuration_script = <<-EOH
+            $job = start-dscconfiguration -Path c:/configurations/#{configuration} -force
+            $job | wait-job
+            $verbose_output = $job.childjobs[0].verbose
+            $verbose_output
+            if ($verbose_output -match 'A reboot is required to progress further. Please reboot the system.') {
+              "A reboot is required to continue."
+              shutdown /r /t 15
+              exit 35
+            }
+            $dsc_errors = $job.childjobs[0].Error
+            if ($dsc_errors -ne $null) {
+              $dsc_errors
+              exit 1
+            }
+          EOH
+          scripts << run_configuration_script
+        end
+        debug("Shelling out: #{scripts}")
+        wrap_powershell_code(scripts)
       end
 
       private
@@ -305,6 +314,14 @@ module Kitchen
         FileUtils.mkdir_p(File.dirname(sandbox_configuration_script_path))
         debug("Moving #{configuration_script_path} to #{sandbox_configuration_script_path}")
         FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
+      end
+
+      def ensure_array(thing)
+        if thing.is_a?(Array)
+          return thing
+        else
+          return [thing]
+        end
       end
     end
   end
