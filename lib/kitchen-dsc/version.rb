@@ -2,6 +2,6 @@
 
 module Kitchen
   module Dsc
-    VERSION = '0.10.1'.freeze
+    VERSION = '0.11.0'.freeze
   end
 end

@@ -1,10 +1,18 @@
 # Change Log
 
+## [v0.11.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.11.0) (2017-09-29)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.10.1...v0.11.0)
+
+**Merged pull requests:**
+
+- Ability to run multiple dsc configurations [\#33](https://github.com/test-kitchen/kitchen-dsc/pull/33) ([TraGicCode](https://github.com/TraGicCode))
+
 ## [v0.10.1](https://github.com/test-kitchen/kitchen-dsc/tree/v0.10.1) (2017-07-05)
 [Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.10.0...v0.10.1)
 
 **Merged pull requests:**
 
+- Release v0.10.1 [\#30](https://github.com/test-kitchen/kitchen-dsc/pull/30) ([smurawski](https://github.com/smurawski))
 - Output mof generation errors [\#28](https://github.com/test-kitchen/kitchen-dsc/pull/28) ([elmundio87](https://github.com/elmundio87))
 
 ## [v0.10.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.10.0) (2016-06-24)
