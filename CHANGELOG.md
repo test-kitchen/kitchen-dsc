@@ -1,53 +1,102 @@
-# 0.10.0
-  - [PR #25](https://github.com/test-kitchen/kitchen-dsc/pull/25) Extract DSC LCM Configuration
+# Change Log
 
-# 0.9.3
-  - [PR #24](https://github.com/test-kitchen/kitchen-dsc/pull/24) Fix install-module repository param resolution
+## [v0.11.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.11.0) (2017-09-29)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.10.1...v0.11.0)
 
-# 0.9.3
-  - [PR #24](https://github.com/test-kitchen/kitchen-dsc/pull/24) Fix install-module repository param resolution
+**Merged pull requests:**
 
-# 0.9.2
-  - quick syntax bug fix
+- Ability to run multiple dsc configurations [\#33](https://github.com/test-kitchen/kitchen-dsc/pull/33) ([TraGicCode](https://github.com/TraGicCode))
 
-# 0.9.1
-  - [PR #21](https://github.com/test-kitchen/kitchen-dsc/pull/21) Silence ProgressPreference
+## [v0.10.1](https://github.com/test-kitchen/kitchen-dsc/tree/v0.10.1) (2017-07-05)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.10.0...v0.10.1)
 
-# 0.9.0
-  - [PR #19](https://github.com/test-kitchen/kitchen-dsc/pull/19) Support LCM reboot requests
+**Merged pull requests:**
 
-# 0.8.3
-  - [PR #16](https://github.com/test-kitchen/kitchen-dsc/pull/16) Remove duplicate parameter.
-  
-# 0.8.1
-  - Custom gallery support (existing named galleries or register new ones).
+- Release v0.10.1 [\#30](https://github.com/test-kitchen/kitchen-dsc/pull/30) ([smurawski](https://github.com/smurawski))
+- Output mof generation errors [\#28](https://github.com/test-kitchen/kitchen-dsc/pull/28) ([elmundio87](https://github.com/elmundio87))
 
-# 0.8.0
-  - PS Gallery Support (default gallery for now)
-  - Fixed individual overrides for LCM settings
+## [v0.10.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.10.0) (2016-06-24)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.9.3...v0.10.0)
 
-# 0.7.0
- - Fixed configuration_data_variable
+**Merged pull requests:**
 
-# 0.6.1
-- [PR #11](https://github.com/test-kitchen/kitchen-dsc/pull/11) Few typos thanks to [PrahlM93](https://github.com/PrahlM93)
+- Extract DSC LCM Configuration To Separate Gem [\#25](https://github.com/test-kitchen/kitchen-dsc/pull/25) ([smurawski](https://github.com/smurawski))
 
-## 0.6.0
+## [v0.9.3](https://github.com/test-kitchen/kitchen-dsc/tree/v0.9.3) (2016-06-23)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.9.2...v0.9.3)
 
-- [PR #10](https://github.com/test-kitchen/kitchen-dsc/pull/10) Fail kitchen run with DSC LCM returns error(s).
-- Updated README.md with documentation of ConfigurationData
+**Merged pull requests:**
 
-## 0.5.0
+- Fix Duplicate Repository Params from metadata [\#24](https://github.com/test-kitchen/kitchen-dsc/pull/24) ([smurawski](https://github.com/smurawski))
 
-- [PR #9](https://github.com/test-kitchen/kitchen-dsc/pull/9) ConfigurationData in the .kitchen.yml
-- Revert Enable-DscDebug
+## [v0.9.2](https://github.com/test-kitchen/kitchen-dsc/tree/v0.9.2) (2016-06-20)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.9.0...v0.9.2)
 
-## 0.4.1
+**Merged pull requests:**
 
-- Add Enable-DscDebug for WMF 5 systems
+- Silence all progress [\#21](https://github.com/test-kitchen/kitchen-dsc/pull/21) ([smurawski](https://github.com/smurawski))
 
-## 0.4.0
+## [v0.9.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.9.0) (2016-06-17)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.8.3...v0.9.0)
 
-- [PR #4](https://github.com/test-kitchen/kitchen-dsc/pull/4) Class-based resource support
-- [PR #5](https://github.com/test-kitchen/kitchen-dsc/pull/5) Support DSC configurations without a "Modules" folder
-- [PR #7](https://github.com/test-kitchen/kitchen-dsc/pull/7) Support smurawski/wmf5 prod preview
+**Merged pull requests:**
+
+- Support reboots [\#19](https://github.com/test-kitchen/kitchen-dsc/pull/19) ([smurawski](https://github.com/smurawski))
+
+## [v0.8.3](https://github.com/test-kitchen/kitchen-dsc/tree/v0.8.3) (2016-05-16)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.8.2...v0.8.3)
+
+**Merged pull requests:**
+
+- Remove duplicate -Repository parameter [\#16](https://github.com/test-kitchen/kitchen-dsc/pull/16) ([brantb](https://github.com/brantb))
+
+## [v0.8.2](https://github.com/test-kitchen/kitchen-dsc/tree/v0.8.2) (2016-04-01)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.8.1...v0.8.2)
+
+## [v0.8.1](https://github.com/test-kitchen/kitchen-dsc/tree/v0.8.1) (2016-04-01)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.8.0...v0.8.1)
+
+## [v0.8.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.8.0) (2016-03-31)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.7.0...v0.8.0)
+
+**Merged pull requests:**
+
+- Psgallery support [\#14](https://github.com/test-kitchen/kitchen-dsc/pull/14) ([smurawski](https://github.com/smurawski))
+
+## [v0.7.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.7.0) (2016-03-28)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.6.1...v0.7.0)
+
+## [v0.6.1](https://github.com/test-kitchen/kitchen-dsc/tree/v0.6.1) (2015-12-28)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.6.0...v0.6.1)
+
+**Merged pull requests:**
+
+- Fix a few typos [\#11](https://github.com/test-kitchen/kitchen-dsc/pull/11) ([smurawski](https://github.com/smurawski))
+
+## [v0.6.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.6.0) (2015-12-18)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.5.0...v0.6.0)
+
+**Merged pull requests:**
+
+- Fail DSC run on error applying configuration. [\#10](https://github.com/test-kitchen/kitchen-dsc/pull/10) ([smurawski](https://github.com/smurawski))
+
+## [v0.5.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.5.0) (2015-12-17)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.4.1...v0.5.0)
+
+**Merged pull requests:**
+
+- Support ConfigurationData in .kitchen.yml [\#9](https://github.com/test-kitchen/kitchen-dsc/pull/9) ([smurawski](https://github.com/smurawski))
+
+## [v0.4.1](https://github.com/test-kitchen/kitchen-dsc/tree/v0.4.1) (2015-12-10)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.4.0...v0.4.1)
+
+## [v0.4.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.4.0) (2015-12-10)
+**Merged pull requests:**
+
+- Smurawski/wmf5 prod preview [\#7](https://github.com/test-kitchen/kitchen-dsc/pull/7) ([smurawski](https://github.com/smurawski))
+- Support DSC configurations without a "Modules" folder [\#5](https://github.com/test-kitchen/kitchen-dsc/pull/5) ([mprahl](https://github.com/mprahl))
+- Class resource support [\#4](https://github.com/test-kitchen/kitchen-dsc/pull/4) ([cstewart87](https://github.com/cstewart87))
+
+
+
+\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
