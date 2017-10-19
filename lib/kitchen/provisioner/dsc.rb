@@ -75,11 +75,12 @@ module Kitchen
       end
 
       def prepare_command
+        sandboxed_mof_path = File.join("configuration", config[:configuration_script_folder])
+        
         info("Moving DSC Resources onto PSModulePath")
         scripts = <<-EOH
         $configuration_name = '#{config[:configuration_name]}'
         #Disabling Execution Policy for current session to allow Dot Sourcing
-        # as per Joel Bennet: https://github.com/PoshCode/ModuleBuilder/blob/master/ExecutionPolicy.psm1
         ($ctx = $executioncontext.gettype().getfield("_context","nonpublic,instance").getvalue(
           $executioncontext)).gettype().getfield("_authorizationManager","nonpublic,instance").setvalue(
           $ctx, (new-object System.Management.Automation.AuthorizationManager "Microsoft.PowerShell"))
@@ -91,11 +92,13 @@ module Kitchen
         }
 
         $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
-        if (-not (test-path $ConfigurationScriptPath))
-        {
-          throw "Failed to find $ConfigurationScriptPath"
+        if('#{config[:configuration_script]}' -ne 'MOF') {
+          if (-not (test-path $ConfigurationScriptPath))
+            {
+              throw "Failed to find $ConfigurationScriptPath"
+            }
+            . $ConfigurationScriptPath    
         }
-        . $ConfigurationScriptPath
 
         EOH
         ensure_array(config[:configuration_name]).each do |configuration|
@@ -114,19 +117,26 @@ module Kitchen
               mkdir 'c:/configurations' | out-null
             }
   
-            if (-not (get-command #{configuration}))
+            if('#{config[:configuration_script]}' -eq 'MOF')
+            {
+              $SourceMof = Join-Path '#{sandboxed_mof_path}' '#{configuration}.mof'
+              Copy-Item -force $SourceMof 'c:/configurations/localhost.mof'
+            }
+            elseif (-not (get-command #{configuration}))
             {
               throw "Failed to create a configuration command #{configuration}"
             }
-  
-            #{configuration_data_assignment unless config[:configuration_data].nil?}
-  
-            try{
-              $null = #{configuration} -outputpath c:/configurations/#{configuration} #{"-configurationdata $" + configuration_data_variable}
+            else
+            {
+              #{configuration_data_assignment unless config[:configuration_data].nil?}
+
+              try{
+                $null = #{configuration} -outputpath c:/configurations/#{configuration} #{"-configurationdata $" + configuration_data_variable}
+              }
+              catch{
+              }
             }
-            catch{
-            }
-  
+
             if($Error -ne $null)
             {
               $Error[-1]
@@ -247,8 +257,8 @@ module Kitchen
       end
 
       def powershell_module?
-        module_metadata_file = File.join(config[:kitchen_root], "#{module_name}.psd1")
-        File.exist?(module_metadata_file)
+        File.exist?(File.join(config[:kitchen_root], "#{module_name}.psd1")) ||
+        File.exist?(File.join(config[:kitchen_root], module_name, "#{module_name}.psd1")
       end
 
       def list_files(path)
@@ -268,32 +278,37 @@ module Kitchen
       end
 
       def prepare_resource_style_directory
-        sandbox_base_module_path = File.join(sandbox_path, "modules/#{module_name}")
-
+        sandbox_module_path = File.join(sandbox_path, "modules")
         base = config[:kitchen_root]
-        list_files(base).each do |src|
-          dest = File.join(sandbox_base_module_path, src.sub("#{base}/", ""))
-          FileUtils.mkdir_p(File.dirname(dest))
-          debug("Staging #{src} ")
-          debug("  at #{dest}")
-          FileUtils.cp(src, dest, :preserve => true)
+
+        if File.exist?(File.join(base, module_name, "#{module_name}.psd1")
+          module_dir = File.join(base, module_name)
+          info("Staging Resource Module from #{module_dir}")
+          copy_if_dir_exists(module_dir, sandbox_module_path)
+        else
+          info("Staging Resource Module from #{base}")
+          copy_if_dir_exists(base, sandbox_module_path)
+        end
+        prepare_repo_style_directory
+      end
+
+      def copy_if_dir_exists(src_to_validate, destination)
+        if Dir.exist?(src_to_validate)
+          debug("Moving #{src_to_validate} to #{destination}")
+          FileUtils.cp_r(src_to_validate, destination)
+        else
+          debug("The modules path #{src_to_validate} was not found. Not moving to #{destination}.")
         end
       end
 
       def prepare_repo_style_directory
         module_path = File.join(config[:kitchen_root], config[:modules_path])
         sandbox_module_path = File.join(sandbox_path, "modules")
-
-        if Dir.exist?(module_path)
-          debug("Moving #{module_path} to #{sandbox_module_path}")
-          FileUtils.cp_r(module_path, sandbox_module_path)
-        else
-          debug("The modules path #{module_path} was not found. Not moving to #{sandbox_module_path}.")
-        end
+        copy_if_dir_exists("#{module_path}/.", sandbox_module_path)
       end
 
       def sandboxed_configuration_script
-        File.join("configuration", config[:configuration_script])
+        File.join("configuration", config[:configuration_script_folder], config[:configuration_script])
       end
 
       def pad(depth = 0)
