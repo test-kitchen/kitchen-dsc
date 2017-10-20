@@ -129,9 +129,8 @@ module Kitchen
             else
             {
               #{configuration_data_assignment unless config[:configuration_data].nil?}
-
               try{
-                $null = #{configuration} -outputpath c:/configurations/#{configuration} #{"-configurationdata $" + configuration_data_variable}
+                $null = #{configuration} -outputpath 'c:/configurations/#{configuration}' #{"-configurationdata $" + configuration_data_variable}
               }
               catch{
               }
@@ -280,13 +279,14 @@ module Kitchen
       def prepare_resource_style_directory
         sandbox_module_path = File.join(sandbox_path, "modules")
         base = config[:kitchen_root]
+        FileUtils.mkdir_p(sandbox_module_path)
 
         if File.exist?(File.join(base, module_name, "#{module_name}.psd1"))
           module_dir = File.join(base, module_name)
           info("Staging Resource Module from #{module_dir}")
           copy_if_dir_exists(module_dir, sandbox_module_path)
         else
-          info("Staging Resource Module from #{base}")
+          debug("Staging Resource Module from #{base} to #{sandbox_module_path}")
           copy_if_dir_exists(base, sandbox_module_path)
         end
         prepare_repo_style_directory
@@ -329,13 +329,13 @@ module Kitchen
       end
 
       def prepare_configuration_script
-        sandbox_configuration_path = File.join(sandbox_path, 'configuration')
+        sandbox_configuration_path = File.join(sandbox_path, 'configuration',config[:configuration_script_folder])
         debug("Local sandbox folder: #{sandbox_configuration_path}")
         configuration_path = File.join(config[:kitchen_root], config[:configuration_script_folder])
         info("Configuration Source folder to copy: #{configuration_path}")
         FileUtils.mkdir_p(sandbox_configuration_path)
         debug("Copying #{configuration_path} to #{sandbox_configuration_path}")
-        FileUtils.cp_r(configuration_path, sandbox_configuration_path)
+        FileUtils.cp_r("#{configuration_path}/.", sandbox_configuration_path)
       end
 
       def ensure_array(thing)
