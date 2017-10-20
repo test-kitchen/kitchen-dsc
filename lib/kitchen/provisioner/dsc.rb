@@ -91,7 +91,7 @@ module Kitchen
           copy-item -destination $env:programfiles/windowspowershell/modules/ -recurse -force
         }
 
-        $ConfigurationScriptPath = Join-path #{config[:root_path]} #{sandboxed_configuration_script}
+        $ConfigurationScriptPath = Join-path '#{config[:root_path]}' #{sandboxed_configuration_script}
         if('#{config[:configuration_script]}' -ne 'MOF') {
           if (-not (test-path $ConfigurationScriptPath))
             {
@@ -119,8 +119,8 @@ module Kitchen
   
             if('#{config[:configuration_script]}' -eq 'MOF')
             {
-              $SourceMof = Join-Path '#{sandboxed_mof_path}' '#{configuration}.mof'
-              Copy-Item -force $SourceMof 'c:/configurations/localhost.mof'
+              $SourceMof = '#{sandboxed_mof_path}\*' 
+              Copy-Item -force -recurse $SourceMof 'c:/configurations/'
             }
             elseif (-not (get-command #{configuration}))
             {
