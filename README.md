@@ -21,13 +21,20 @@ You will see a delay in the return of the run details due to an difference in ho
 * configuration_script_folder
   * Defaults to 'examples'.
   * The location of a PowerShell script(s) containing the DSC configuration command(s).
+  * The whole content of the folder will be copied to the node
 
 * configuration_script
   * Defaults to 'dsc_configuration.ps1'
   * The name of the PowerShell script containing the DSC configuration command(s) (and possibly configuration data)
+  * can be a relative path from the configuration_script_folder
+  * the configuration script is dot sourced
+  * if the configuration_script is set to `MOF` it will not execute a configuration script but copy
+  the content of configuration_script_folder as-is, so that MOF from those directories can be applied.
 
 * configuration_name
-  * Name of the configuration to run, defaults to the suite name.
+  * Name of the configurations to run, defaults to the suite name.
+  * This can be an array of configuration from the same configuration script.
+  * When applying MOFs directly, the path expected is `configuration_script_folder\configuration_name\*.mof`
 
 * configuration_data
   * A YAML representation of what should be passed to the configuration.
@@ -73,11 +80,11 @@ You will see a delay in the return of the run details due to an difference in ho
 * gallery_uri
   * URI for a custom PowerShell gallery feed.
 
-### Specific to repository style testing
 * modules_path
   * Defaults to 'modules'.
   * Points to the location of modules containing DSC resources to upload
   * This path is relative to the root of the repository (the location of the .kitchen.yml).
+  * this works for both Repository and Resource style testing
 
 ## Example 
 
@@ -106,3 +113,23 @@ suite:
           - nodename: localhost
             role: webserver
 ```
+
+Now you can also:
+  - apply MOF(s) directly
+  - copy the whole content of the `configuration_script_folder`, 
+  allowing more complex configs
+  - Copy modules from module_path to the node in Resource Repo
+  - store your kitchen.yml file in the parent folder of a Module where
+  the structure follows this:
+  ```
+  MODULENAME
+  │   .kitchen.yml
+  │
+  ├───ModuleName
+  │   │   ModuleName.psd1
+  │   │
+  │   └───DscResources
+  └───Modules
+      └───xNetworking
+    ```
+  
