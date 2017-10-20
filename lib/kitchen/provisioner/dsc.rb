@@ -258,7 +258,7 @@ module Kitchen
 
       def powershell_module?
         File.exist?(File.join(config[:kitchen_root], "#{module_name}.psd1")) ||
-        File.exist?(File.join(config[:kitchen_root], module_name, "#{module_name}.psd1")
+        File.exist?(File.join(config[:kitchen_root], module_name, "#{module_name}.psd1"))
       end
 
       def list_files(path)
@@ -281,7 +281,7 @@ module Kitchen
         sandbox_module_path = File.join(sandbox_path, "modules")
         base = config[:kitchen_root]
 
-        if File.exist?(File.join(base, module_name, "#{module_name}.psd1")
+        if File.exist?(File.join(base, module_name, "#{module_name}.psd1"))
           module_dir = File.join(base, module_name)
           info("Staging Resource Module from #{module_dir}")
           copy_if_dir_exists(module_dir, sandbox_module_path)
@@ -331,7 +331,7 @@ module Kitchen
       def prepare_configuration_script
         sandbox_configuration_path = File.join(sandbox_path, 'configuration')
         debug("Local sandbox folder: #{sandbox_configuration_path}")
-        configuration_path = File.join(config[:kitchen_root], "#{config[:configuration_script_folder]}/.")
+        configuration_path = File.join(config[:kitchen_root], config[:configuration_script_folder])
         info("Configuration Source folder to copy: #{configuration_path}")
         FileUtils.mkdir_p(sandbox_configuration_path)
         debug("Copying #{configuration_path} to #{sandbox_configuration_path}")
