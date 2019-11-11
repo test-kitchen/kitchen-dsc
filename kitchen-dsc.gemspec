@@ -43,6 +43,6 @@ EOF
   # style and complexity libraries are tightly version pinned as newer releases
   # may introduce new and undesireable style choices which would be immediately
   # enforced in CI
-  s.add_development_dependency "finstyle",  "1.4.0"
+  s.add_development_dependency "finstyle",  "1.5.0"
   s.add_development_dependency "cane",      "3.0.0"
 end
