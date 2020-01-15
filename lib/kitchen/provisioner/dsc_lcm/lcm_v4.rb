@@ -6,7 +6,7 @@
 # Licensed under the Apache 2 License.
 # See LICENSE for more details
 
-require "kitchen/provisioner/dsc_lcm/lcm_base"
+require_relative "lcm_base"
 
 module Kitchen
   module Provisioner
