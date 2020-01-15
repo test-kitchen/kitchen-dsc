@@ -18,7 +18,7 @@ RuboCop::RakeTask.new(:rubocop) do |task|
 end
 
 desc "Run all test suites"
-task test: [:unit]
+task test: [:unit, :rubocop]
 
 task default: [:test]
 
