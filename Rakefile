@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 require "bundler/gem_tasks"
 
 require "rake/testtask"
@@ -9,21 +7,31 @@ Rake::TestTask.new(:unit) do |t|
   t.verbose = true
 end
 
-desc "Run all test suites"
-task :test => [:unit]
+require "rubocop/rake_task"
+require "chefstyle"
 
-task :default => [:test]
+desc "Run RuboCop on the lib directory"
+RuboCop::RakeTask.new(:rubocop) do |task|
+  task.patterns = ["lib/**/*.rb"]
+  # don't abort rake on failure
+  task.fail_on_error = false
+end
+
+desc "Run all test suites"
+task test: [:unit, :rubocop]
+
+task default: [:test]
 
 begin
   require "github_changelog_generator/task"
-  require 'kitchen-dsc/version'
+  require "kitchen-dsc/version"
 
   GitHubChangelogGenerator::RakeTask.new :changelog do |config|
     config.future_release = "v#{Kitchen::Dsc::VERSION}"
     config.issues = false
     config.pulls = true
-    config.user = 'test-kitchen'
-    config.project = 'kitchen-dsc'
+    config.user = "test-kitchen"
+    config.project = "kitchen-dsc"
   end
 rescue LoadError
   puts "github_changelog_generator is not available. " \

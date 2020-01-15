@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 #
 # Author:: Steven Murawski (<steven.murawski@gmail.com>)
 #
@@ -16,15 +15,15 @@ module Kitchen
 
         def lcm_properties
           {
-            :action_after_reboot => "StopConfiguration",
-            :allow_module_overwrite => false,
-            :certificate_id => nil,
-            :configuration_mode => "ApplyAndAutoCorrect",
-            :configuration_mode_frequency_mins => 30,
-            :debug_mode => "All",
-            :reboot_if_needed => false,
-            :refresh_mode => "PUSH",
-            :refresh_frequency_mins => 15
+            action_after_reboot: "StopConfiguration",
+            allow_module_overwrite: false,
+            certificate_id: nil,
+            configuration_mode: "ApplyAndAutoCorrect",
+            configuration_mode_frequency_mins: 30,
+            debug_mode: "All",
+            reboot_if_needed: false,
+            refresh_mode: "PUSH",
+            refresh_frequency_mins: 15,
           }
         end
 
