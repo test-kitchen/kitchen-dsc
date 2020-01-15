@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 $LOAD_PATH.unshift File.expand_path("../lib", __FILE__)
 require "kitchen-dsc/version"
 
@@ -15,17 +13,17 @@ Gem::Specification.new do |s|
   s.platform          = Gem::Platform::RUBY
   s.require_paths     = ["lib"]
   s.rubyforge_project = "[none]"
-  s.license           = "Apache 2"
-  s.description       = <<-EOF
-== DESCRIPTION:
+  s.license           = "Apache-2.0"
+  s.description       = <<~EOF
+    == DESCRIPTION:
 
-DSC Provisioner for Test Kitchen
+    DSC Provisioner for Test Kitchen
 
-== FEATURES:
+    == FEATURES:
 
-TBD
+    TBD
 
-EOF
+  EOF
   s.add_dependency "test-kitchen", ">= 1.9"
   s.add_dependency "dsc_lcm_configuration"
 
@@ -43,6 +41,6 @@ EOF
   # style and complexity libraries are tightly version pinned as newer releases
   # may introduce new and undesireable style choices which would be immediately
   # enforced in CI
-  s.add_development_dependency "finstyle",  "1.5.0"
-  s.add_development_dependency "cane",      "3.0.0"
+  s.add_development_dependency "chefstyle", "0.14"
+  s.add_development_dependency "cane", "3.0.0"
 end

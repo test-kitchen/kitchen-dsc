@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 #
 # Author:: Steven Murawski (<steven.murawski@gmail.com>)
 #
@@ -15,17 +14,15 @@ module Kitchen
     module DscLcm
       class LcmBase
 
-        
-
         def lcm_properties
           {
-            :allow_module_overwrite => false,
-            :certificate_id => nil,
-            :configuration_mode => "ApplyAndAutoCorrect",
-            :configuration_mode_frequency_mins => 30,
-            :reboot_if_needed => false,
-            :refresh_mode => "PUSH",
-            :refresh_frequency_mins => 15
+            allow_module_overwrite: false,
+            certificate_id: nil,
+            configuration_mode: "ApplyAndAutoCorrect",
+            configuration_mode_frequency_mins: 30,
+            reboot_if_needed: false,
+            refresh_mode: "PUSH",
+            refresh_frequency_mins: 15,
           }
         end
 
@@ -42,6 +39,7 @@ module Kitchen
 
         def method_missing(name, *args)
           return super unless lcm_properties.keys.include?(name)
+
           if args.length == 1
             instance_variable_set("@#{name}", args.first)
           else

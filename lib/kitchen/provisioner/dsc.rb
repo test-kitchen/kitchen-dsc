@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 #
 # Author:: Steven Murawski (<steven.murawski@gmail.com>)
 #
@@ -55,9 +54,9 @@ module Kitchen
       end
 
       def init_command
-        script = <<-EOH
-#{setup_config_directory_script}
-#{install_module_script if install_modules?}
+        script = <<~EOH
+          #{setup_config_directory_script}
+          #{install_module_script if install_modules?}
         EOH
         wrap_powershell_code(script)
       end
@@ -77,7 +76,7 @@ module Kitchen
       def prepare_command
         info("Moving DSC Resources onto PSModulePath")
         scripts = <<-EOH
-        
+
         if (Test-Path (join-path #{config[:root_path]} 'modules'))
         {
           dir ( join-path #{config[:root_path]} 'modules/*') -directory |
@@ -95,38 +94,38 @@ module Kitchen
         ensure_array(config[:configuration_name]).each do |configuration|
           info("Generating the MOF script for the configuration #{configuration}")
           stage_resources_and_generate_mof_script = <<-EOH
-  
+
             if(Test-Path c:/configurations/#{configuration})
             {
                 Remove-Item -Recurse -Force c:/configurations/#{configuration}
             }
-  
+
             $Error.clear()
-  
+
             if (-not (test-path 'c:/configurations'))
             {
               mkdir 'c:/configurations' | out-null
             }
-  
+
             if (-not (get-command #{configuration}))
             {
               throw "Failed to create a configuration command #{configuration}"
             }
-  
+
             #{configuration_data_assignment unless config[:configuration_data].nil?}
-  
+
             try{
               $null = #{configuration} -outputpath c:/configurations/#{configuration} #{"-configurationdata $" + configuration_data_variable}
             }
             catch{
             }
-  
+
             if($Error -ne $null)
             {
               $Error[-1]
               exit 1
             }
-  
+
           EOH
           scripts << stage_resources_and_generate_mof_script
         end
@@ -137,7 +136,7 @@ module Kitchen
       def run_command
         config[:retry_on_exit_code] = [35] if config[:retry_on_exit_code].empty?
         config[:max_retries] = 3 if config[:max_retries] == 1
-        scripts = ''
+        scripts = ""
         ensure_array(config[:configuration_name]).each do |configuration|
           info("Running the configuration #{configuration}")
           run_configuration_script = <<-EOH
@@ -177,12 +176,12 @@ module Kitchen
       end
 
       def powershell_module_params(module_specification_hash)
-        keys = module_specification_hash.keys.reject { |k| k.to_s.casecmp('force') == 0 }
-        unless keys.any? { |k| k.to_s.downcase == 'repository' }
+        keys = module_specification_hash.keys.reject { |k| k.to_s.casecmp("force") == 0 }
+        unless keys.any? { |k| k.to_s.downcase == "repository" }
           keys.push(:repository)
           module_specification_hash[:repository] = psmodule_repository_name
         end
-        keys.map { |key| "-#{key} #{module_specification_hash[key]}" }.join(' ')
+        keys.map { |key| "-#{key} #{module_specification_hash[key]}" }.join(" ")
       end
 
       def powershell_modules
@@ -198,6 +197,7 @@ module Kitchen
 
       def nuget_force_bootstrap
         return unless config[:nuget_force_bootstrap]
+
         info("Bootstrapping the nuget package provider for PowerShell PackageManagement.")
         "install-packageprovider nuget -force -forcebootstrap | out-null"
       end
@@ -205,17 +205,20 @@ module Kitchen
       def psmodule_repository_name
         return "PSGallery" if config[:gallery_name].nil? && config[:gallery_uri].nil?
         return "testing"   if config[:gallery_name].nil?
+
         config[:gallery_name]
       end
 
       def register_psmodule_repository
         return if config[:gallery_uri].nil?
+
         info("Registering a new PowerShellGet Repository - #{psmodule_repository_name}")
         "register-packagesource -providername PowerShellGet -name '#{psmodule_repository_name}' -location '#{config[:gallery_uri]}' -force -trusted"
       end
 
       def install_module_script
         return if config[:modules_from_gallery].nil?
+
         <<-EOH
   #{nuget_force_bootstrap}
   #{register_psmodule_repository}
@@ -270,7 +273,7 @@ module Kitchen
           FileUtils.mkdir_p(File.dirname(dest))
           debug("Staging #{src} ")
           debug("  at #{dest}")
-          FileUtils.cp(src, dest, :preserve => true)
+          FileUtils.cp(src, dest, preserve: true)
         end
       end
 
@@ -318,9 +321,9 @@ module Kitchen
 
       def ensure_array(thing)
         if thing.is_a?(Array)
-          return thing
+          thing
         else
-          return [thing]
+          [thing]
         end
       end
     end
