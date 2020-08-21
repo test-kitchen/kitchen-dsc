@@ -8,22 +8,12 @@ Gem::Specification.new do |s|
   s.email             = ["smurawski@chef.io"]
   s.homepage          = "https://github.com/test-kitchen/kitchen-dsc"
   s.summary           = "PowerShell DSC provisioner for test-kitchen"
+  s.description       = "PowerShell DSC provisioner for test-kitchen"
   candidates          = Dir.glob("lib/**/*") + ["README.md", "kitchen-dsc.gemspec"]
   s.files             = candidates.sort
   s.platform          = Gem::Platform::RUBY
   s.require_paths     = ["lib"]
-  s.rubyforge_project = "[none]"
   s.license           = "Apache-2.0"
-  s.description       = <<~EOF
-    == DESCRIPTION:
-
-    DSC Provisioner for Test Kitchen
-
-    == FEATURES:
-
-    TBD
-
-  EOF
   s.add_dependency "test-kitchen", ">= 1.9"
   s.add_dependency "dsc_lcm_configuration"
 
