@@ -1,5 +1,19 @@
 # Change Log
 
+## [v0.11.1](https://github.com/test-kitchen/kitchen-dsc/tree/v0.11.1) (2020-08-21)
+[Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.11.0...v0.11.1)
+
+**Merged pull requests:**
+
+- Update finstyle requirement from = 1.4.0 to = 1.5.0 [\#36](https://github.com/test-kitchen/kitchen-dsc/pull/36) ([dependabot](https://github.com/dependabot))
+- Update cane requirement from = 2.6.2 to = 3.0.0 [\#37](https://github.com/test-kitchen/kitchen-dsc/pull/37) ([dependabot](https://github.com/dependabot))
+- Switch from finstyle to chefstyle [\#38](https://github.com/test-kitchen/kitchen-dsc/pull/38) ([tas50](https://github.com/tas50))
+- Use require_relative instead of require [\#39](https://github.com/test-kitchen/kitchen-dsc/pull/39) ([tas50](https://github.com/tas50))
+- Update chefstyle requirement from = 0.14 to = 1.1.2 [\#47](https://github.com/test-kitchen/kitchen-dsc/pull/47) ([dependabot](https://github.com/dependabot))
+- Update chefstyle requirement from = 1.1.2 to = 1.2.0 [\#49](https://github.com/test-kitchen/kitchen-dsc/pull/49) ([dependabot](https://github.com/dependabot))
+- Update chefstyle requirement from = 1.2.0 to = 1.2.1 [\#50](https://github.com/test-kitchen/kitchen-dsc/pull/50) ([dependabot](https://github.com/dependabot))
+- Optimize our requires [\#51](https://github.com/test-kitchen/kitchen-dsc/pull/51) ([tas50](https://github.com/tas50))
+
 ## [v0.11.0](https://github.com/test-kitchen/kitchen-dsc/tree/v0.11.0) (2017-09-29)
 [Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.10.1...v0.11.0)
 
