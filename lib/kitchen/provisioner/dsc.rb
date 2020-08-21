@@ -6,8 +6,8 @@
 # Licensed under the Apache 2 License.
 # See LICENSE for more details
 
-require "fileutils"
-require "pathname"
+require "fileutils" unless defined?(FileUtils)
+require "pathname" unless defined?(Pathname)
 require "kitchen/provisioner/base"
 require "kitchen/util"
 require "dsc_lcm_configuration"
