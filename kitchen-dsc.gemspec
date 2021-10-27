@@ -31,6 +31,6 @@ Gem::Specification.new do |s|
   # style and complexity libraries are tightly version pinned as newer releases
   # may introduce new and undesireable style choices which would be immediately
   # enforced in CI
-  s.add_development_dependency "chefstyle", "2.1.1"
+  s.add_development_dependency "chefstyle", "2.1.2"
   s.add_development_dependency "cane", "3.0.0"
 end
