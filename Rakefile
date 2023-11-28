@@ -1,39 +1,21 @@
 require "bundler/gem_tasks"
-
-require "rake/testtask"
-Rake::TestTask.new(:unit) do |t|
-  t.libs.push "lib"
-  t.test_files = FileList["spec/**/*_spec.rb"]
-  t.verbose = true
-end
-
-require "rubocop/rake_task"
 require "chefstyle"
+require "rubocop/rake_task"
 
-desc "Run RuboCop on the lib directory"
-RuboCop::RakeTask.new(:rubocop) do |task|
-  task.patterns = ["lib/**/*.rb"]
-  # don't abort rake on failure
-  task.fail_on_error = false
+RuboCop::RakeTask.new(:style) do |task|
+  task.options += ["--display-cop-names", "--no-color"]
 end
 
-desc "Run all test suites"
-task test: [:unit, :rubocop]
-
-task default: [:test]
-
-begin
-  require "github_changelog_generator/task"
-  require "kitchen-dsc/version"
-
-  GitHubChangelogGenerator::RakeTask.new :changelog do |config|
-    config.future_release = "v#{Kitchen::Dsc::VERSION}"
-    config.issues = false
-    config.pulls = true
-    config.user = "test-kitchen"
-    config.project = "kitchen-dsc"
-  end
-rescue LoadError
-  puts "github_changelog_generator is not available. " \
-    "gem install github_changelog_generator to generate changelogs"
+# Create the spec task.
+require "rspec/core/rake_task"
+RSpec::Core::RakeTask.new(:test, :tag) do |t, args|
+  t.rspec_opts = [].tap do |a|
+    a << "--color"
+    a << "--format #{ENV["CI"] ? "documentation" : "progress"}"
+    a << "--backtrace" if ENV["VERBOSE"] || ENV["DEBUG"]
+    a << "--seed #{ENV["SEED"]}" if ENV["SEED"]
+    a << "--tag #{args[:tag]}" if args[:tag]
+    a << "--default-path test"
+    a << "-I test/spec"
+  end.join(" ")
 end
