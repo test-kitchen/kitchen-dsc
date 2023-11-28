@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.12.0](https://github.com/test-kitchen/kitchen-dsc/compare/v0.11.1...v0.12.0) (2023-11-28)
+
+
+### Features
+
+* Update workflows ([#90](https://github.com/test-kitchen/kitchen-dsc/issues/90)) ([6470675](https://github.com/test-kitchen/kitchen-dsc/commit/6470675bca38e18bb15882edcec8c6a0c9939b0a))
+
 ## [v0.11.1](https://github.com/test-kitchen/kitchen-dsc/tree/v0.11.1) (2020-08-21)
 
 [Full Changelog](https://github.com/test-kitchen/kitchen-dsc/compare/v0.11.0...v0.11.1)
