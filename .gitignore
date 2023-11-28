@@ -9,7 +9,6 @@ Gemfile.lock
 *.gem
 .bundle
 .config
-.rubocop.yml
 coverage
 InstalledFiles
 lib/bundler/man
