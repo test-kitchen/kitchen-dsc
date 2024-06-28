@@ -16,7 +16,7 @@ You'll need a driver box with WMF4 or greater (ONLY WINDOWS SYSTEMS)
 
 You'll need the test-kitchen & kitchen-dsc gems installed in your system, along with kitchen-vagrant or some ther suitable driver for test-kitchen.
 
-### Note:
+### Note
 
 You will see a delay in the return of the run details due to an difference in how the verbose stream is returned for DSC runs between WMF versions, so I return the verbose stream after the job completes.  I'd love to live stream the results, but that'll take a bit more experimentation. (PR's welcome!)
 
