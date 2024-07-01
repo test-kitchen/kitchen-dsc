@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.12.1](https://github.com/test-kitchen/kitchen-dsc/compare/v0.12.0...v0.12.1) (2024-07-01)
+
+
+### Bug Fixes
+
+* release please ([#95](https://github.com/test-kitchen/kitchen-dsc/issues/95)) ([cd88b24](https://github.com/test-kitchen/kitchen-dsc/commit/cd88b249be85d599191793b25e28b33511c55d97))
+
 ## [0.12.0](https://github.com/test-kitchen/kitchen-dsc/compare/v0.11.1...v0.12.0) (2023-11-28)
 
 
