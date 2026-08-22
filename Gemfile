@@ -15,7 +15,7 @@ end
 group :test do
   gem "rake"
   gem "rspec",     "~> 3.2"
-  gem "simplecov", "~> 0.9"
+  gem "simplecov", "~> 1.0"
   gem "minitest",  "~> 5.3"
 end
 
