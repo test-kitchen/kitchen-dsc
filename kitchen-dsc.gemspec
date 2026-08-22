@@ -4,6 +4,7 @@ require "kitchen-dsc/version"
 
 Gem::Specification.new do |gem|
   gem.name              = "kitchen-dsc"
+  gem.required_ruby_version = ">= 3.1"
   gem.version           = Kitchen::Dsc::VERSION
   gem.authors           = ["Test Kitchen Team"]
   gem.email             = ["help@sous-chefs.org"]
