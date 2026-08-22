@@ -2,113 +2,201 @@
 
 [![Gem Version](https://badge.fury.io/rb/kitchen-dsc.svg)](http://badge.fury.io/rb/kitchen-dsc)
 
-A Test Kitchen Provisioner for PowerShell DSC
+A [Test Kitchen](https://kitchen.ci/) provisioner that applies [PowerShell Desired State Configuration](https://learn.microsoft.com/en-us/powershell/dsc/overview) configurations to test instances, so you can test DSC configurations and resources the same way you would test a cookbook.
 
-## Status
+> **This project is no longer under active development.** It has no active
+> maintainers. The provisioner may continue to work for some or all use cases,
+> but issues filed on GitHub will most likely not be triaged. If you are
+> interested in maintaining it, come and talk to us in `#test-kitchen` on
+> [Chef Community Slack](https://community-slack.chef.io/).
 
-This software project is no longer under active development as it has no active maintainers. The software may continue to work for some or all use cases, but issues filed in GitHub will most likely not be triaged. If a new maintainer is interested in working on this project please come chat with us in #test-kitchen on Chef Community Slack.
+<!-- -->
+
+> This documentation uses [Cinc Workstation](https://cinc.sh/) and the `cinc` commands throughout. Everything here works identically with Chef Workstation — see [Using with Chef](#using-with-chef).
 
 ## Requirements
 
-You'll need a driver box with WMF4 or greater (ONLY WINDOWS SYSTEMS)
+- **Windows test instances only.** The instance must be running WMF 4 or newer.
+- A Test Kitchen driver that can provide Windows instances, such as
+  [kitchen-vagrant](https://github.com/test-kitchen/kitchen-vagrant),
+  [kitchen-hyperv](https://github.com/test-kitchen/kitchen-hyperv), or
+  [kitchen-ec2](https://github.com/test-kitchen/kitchen-ec2)
+- WMF 5 if you want to install modules from a PowerShell gallery
 
-## Installation & Setup
+## Installation
 
-You'll need the test-kitchen & kitchen-dsc gems installed in your system, along with kitchen-vagrant or some other suitable driver for test-kitchen.
+Add the provisioner to your `Gemfile` alongside Test Kitchen and a driver:
 
-### Note
+```ruby
+gem "test-kitchen"
+gem "kitchen-dsc"
+gem "kitchen-vagrant"
+```
 
-You will see a delay in the return of the run details due to an difference in how the verbose stream is returned for DSC runs between WMF versions, so I return the verbose stream after the job completes.  I'd love to live stream the results, but that'll take a bit more experimentation. (PR's welcome!)
+Then:
 
-## Example Configurations
+```sh
+bundle install
+```
 
-* [Repository Style Testing](https://github.com/smurawski/dsc-kitchen-project)
-* [Module Style Testing](https://github.com/powershellorg/cwebadministration/tree/smurawski/adding_tests)
+Or install it directly:
 
-## Configuration Settings
+```sh
+gem install kitchen-dsc
+```
 
-* configuration_script_folder
-  * Defaults to 'examples'.
-  * The location of a PowerShell script(s) containing the DSC configuration command(s).
+## Two ways to lay out a project
 
-* configuration_script
-  * Defaults to 'dsc_configuration.ps1'
-  * The name of the PowerShell script containing the DSC configuration command(s) (and possibly configuration data)
+How you configure this provisioner depends on what you are testing.
 
-* configuration_name
-  * Name of the configuration to run, defaults to the suite name.
+**Module style** keeps the DSC configuration next to the module it exercises.
+Point `configuration_script_folder` and `configuration_script` at that file.
 
-* configuration_data
-  * A YAML representation of what should be passed to the configuration.
-  * Overrides any configurationdata variable assigned in the configuration script.
+**Repository style** keeps a `modules` directory of DSC resources at the root of
+the repository, which the provisioner uploads to the instance before applying
+the configuration. `modules_path` controls where that directory is.
 
-* configuration_data_variable
-  * Defaults to 'ConfigurationData'
-  * Name of the variable that contains the ConfigurationData hashtable
-  * Can be defined in the configuration script or via the `configuration_data` configuration setting.
+Worked examples of each:
 
-* dsc_local_configuration_manager_version
-  * Defaults to 'wmf4'
-  * Identifies what version of the LCM is in place
-  * Other valid values are 'wmf4_with_update' and 'wmf5'
-    * Currently the only difference between wmf4 and wmf4_with_update/wmf5 is the action_after_reboot and the debug_mode settings.  Eventually, I'd like to add support for partial configurations, pull servers, etc..
-  * In this context, wmf4_with_update refers to wmf4 with KB3000850 applied (to add support for WMF 5 generated configurations, plus some fixes).
+- [Repository style testing](https://github.com/smurawski/dsc-kitchen-project)
+- [Module style testing](https://github.com/powershellorg/cwebadministration/tree/smurawski/adding_tests)
 
-* dsc_local_configuration_manager
-  * Settings for the LCM
-  * Defaults are:
-    * action_after_reboot = 'StopConfiguration' # wmf4_with_update or wmf5
-    * reboot_if_needed = false
-    * allow_module_overwrite = false
-    * certificate_id = nil
-    * configuration_mode = 'ApplyAndAutoCorrect'
-    * configuration_mode_frequency_mins = 30    # 15 on wmf5
-    * debug_mode = 'All'                        # wmf4_with_update
-    * refresh_frequency_mins = 15               # 30 on wmf5
-    * refresh_mode = 'PUSH'
+## Quick Start
 
-* modules_from_gallery
-  * Requires WMF 5
-  * Takes a string (for one module) or an array (for multiple) to install from the gallery
-  * Or takes a hash with keys matching the parameters for install-module.
-    * Name is required.
-    * Force is automatically used and not required as part of the hash table.
-    * Repository defaults to either PSGallery or any custom feed defined, but can be overridden here.
+Put a DSC configuration in `examples/dsc_configuration.ps1`, then:
 
-* gallery_name
-  * Custom PowerShell gallery name to install modules from.
-  * If there is no package source with this name registered on the machine, then gallery_uri must be configured as well.
+```yaml
+---
+driver:
+  name: vagrant
 
-* gallery_uri
-  * URI for a custom PowerShell gallery feed.
+provisioner:
+  name: dsc
+  dsc_local_configuration_manager_version: wmf5
 
-### Specific to repository style testing
+platforms:
+  - name: windows-2022
 
-* modules_path
-  * Defaults to 'modules'.
-  * Points to the location of modules containing DSC resources to upload
-  * This path is relative to the root of the repository (the location of the .kitchen.yml).
+suites:
+  - name: default
+```
 
-## Example
+Then run the full test cycle:
+
+```sh
+cinc kitchen test
+```
+
+Or step through it:
+
+```sh
+cinc kitchen create    # build the Windows instance
+cinc kitchen converge  # apply the DSC configuration
+cinc kitchen verify    # run your tests
+cinc kitchen destroy   # remove the instance
+```
+
+By default the provisioner looks for a configuration named after the suite, in
+`examples/dsc_configuration.ps1`.
+
+> **Note on output timing:** the verbose stream is returned after the DSC job
+> completes rather than while it runs, because WMF versions differ in how they
+> expose that stream. Expect a delay before you see run details.
+
+## Configuration
+
+All options below are set under the `provisioner:` key in `kitchen.yml`, or per suite under `suites[].provisioner:`.
+
+### Configuration script
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `configuration_script_folder` | `"examples"` | Directory holding the PowerShell script(s) that define the DSC configuration. |
+| `configuration_script` | `"dsc_configuration.ps1"` | Name of the PowerShell script containing the DSC configuration command, and possibly its configuration data. |
+| `configuration_name` | the suite name | Name of the configuration command to run. |
+
+### Configuration data
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `configuration_data` | *unset* | YAML representation of the data passed to the configuration. Overrides any configuration data assigned in the script itself. |
+| `configuration_data_variable` | `"ConfigurationData"` | Name of the variable holding the ConfigurationData hashtable. Can be set here or defined in the configuration script. |
+
+### Local Configuration Manager
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `dsc_local_configuration_manager_version` | `"wmf4"` | Which LCM is in place. Also accepts `wmf4_with_update` and `wmf5`. |
+| `dsc_local_configuration_manager` | *see below* | Hash of LCM settings. |
+
+`wmf4_with_update` means WMF 4 with KB3000850 applied, which adds support for
+configurations generated by WMF 5 along with a number of fixes. Today the only
+differences between `wmf4` and the other two values are the `action_after_reboot`
+and `debug_mode` settings.
+
+The LCM settings and their defaults:
+
+| Setting | Default | Notes |
+| --- | --- | --- |
+| `action_after_reboot` | `"StopConfiguration"` | `wmf4_with_update` and `wmf5` only. |
+| `reboot_if_needed` | `false` | |
+| `allow_module_overwrite` | `false` | |
+| `certificate_id` | `nil` | |
+| `configuration_mode` | `"ApplyAndAutoCorrect"` | |
+| `configuration_mode_frequency_mins` | `30` | `15` on `wmf5`. |
+| `debug_mode` | `"All"` | `wmf4_with_update` only. |
+| `refresh_frequency_mins` | `15` | `30` on `wmf5`. |
+| `refresh_mode` | `"PUSH"` | |
+
+### Modules from a gallery
+
+Installing modules from a gallery requires WMF 5 on the instance.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `modules_from_gallery` | *unset* | Modules to install from a gallery. A string for one module, an array for several, or a hash matching the parameters of `Install-Module`. `Name` is required; `Force` is always applied and need not be given. |
+| `gallery_name` | *unset* | Name of a custom PowerShell gallery to install from. If no package source with this name is registered on the machine, `gallery_uri` must be set too. |
+| `gallery_uri` | *unset* | URI of a custom PowerShell gallery feed. |
+| `nuget_force_bootstrap` | `true` | Bootstrap the NuGet package provider for PowerShell PackageManagement before installing modules. |
+
+### Repository style testing
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `modules_path` | `"modules"` | Directory of modules containing DSC resources to upload to the instance, relative to the root of the repository, next to `kitchen.yml`. |
+
+### Reboot handling
+
+These are standard Test Kitchen provisioner options that this provisioner gives DSC-specific defaults.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `retry_on_exit_code` | `[35]` | Exit codes that cause the converge to be retried. Exit code 35 is DSC signalling that a reboot is required. |
+| `max_retries` | `3` | Number of times to retry the converge on one of those exit codes. |
+| `root_path` | driver default | Directory on the instance where the configuration and modules are staged. |
+
+## Examples
+
+### Module style, with modules from a custom gallery
 
 ```yaml
 provisioner:
-  - name: dsc
-    dsc_local_configuration_manager_version: wmf5
-    dsc_local_configuration_manager:
-      reboot_if_needed: true
-      debug_mode: none
-    configuration_script_folder: .
-    configuration_script: SampleConfig.ps1
-    gallery_uri: https://ci.appveyor.com/nuget/xWebAdministration
-    gallery_name: xWebDevFeed
-    modules_from_gallery:
-      - xWebAdministration
-      - name: xComputerManagement
-        requiredversion: 1.4.0.0
-        repository: PSGallery
+  name: dsc
+  dsc_local_configuration_manager_version: wmf5
+  dsc_local_configuration_manager:
+    reboot_if_needed: true
+    debug_mode: none
+  configuration_script_folder: .
+  configuration_script: SampleConfig.ps1
+  gallery_uri: https://ci.appveyor.com/nuget/xWebAdministration
+  gallery_name: xWebDevFeed
+  modules_from_gallery:
+    - xWebAdministration
+    - name: xComputerManagement
+      requiredversion: 1.4.0.0
+      repository: PSGallery
 
-suite:
+suites:
   - name: test
     provisioner:
       configuration_data:
@@ -116,3 +204,66 @@ suite:
           - nodename: localhost
             role: webserver
 ```
+
+### Repository style
+
+```yaml
+provisioner:
+  name: dsc
+  dsc_local_configuration_manager_version: wmf5
+  modules_path: modules
+  configuration_script_folder: examples
+  configuration_script: webserver.ps1
+  configuration_name: WebServer
+```
+
+### Allowing reboots during a converge
+
+```yaml
+provisioner:
+  name: dsc
+  dsc_local_configuration_manager_version: wmf5
+  dsc_local_configuration_manager:
+    reboot_if_needed: true
+    action_after_reboot: ContinueConfiguration
+  max_retries: 5
+```
+
+### Per-suite configuration data
+
+```yaml
+provisioner:
+  name: dsc
+  configuration_script_folder: examples
+  configuration_script: webserver.ps1
+
+suites:
+  - name: default
+    provisioner:
+      configuration_data:
+        AllNodes:
+          - nodename: localhost
+            role: webserver
+  - name: minimal
+    provisioner:
+      configuration_data:
+        AllNodes:
+          - nodename: localhost
+            role: minimal
+```
+
+## Using with Chef
+
+This provisioner is not tied to Cinc, and it does not require Cinc or Chef on the instance at all — it applies DSC configurations directly. The commands above use Cinc Workstation; with [Chef Workstation](https://www.chef.io/downloads/tools/workstation) run `kitchen` instead of `cinc kitchen`. No provisioner configuration changes are needed.
+
+## Contributing
+
+This project has no active maintainers, so please read the status note at the
+top before opening an issue. Pull requests are still welcome on
+[GitHub](https://github.com/test-kitchen/kitchen-dsc). See
+[CONTRIBUTING.md](CONTRIBUTING.md) for development setup and the state of the
+test tooling.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
