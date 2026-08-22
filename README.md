@@ -14,7 +14,7 @@ You'll need a driver box with WMF4 or greater (ONLY WINDOWS SYSTEMS)
 
 ## Installation & Setup
 
-You'll need the test-kitchen & kitchen-dsc gems installed in your system, along with kitchen-vagrant or some ther suitable driver for test-kitchen.
+You'll need the test-kitchen & kitchen-dsc gems installed in your system, along with kitchen-vagrant or some other suitable driver for test-kitchen.
 
 ### Note
 
@@ -73,7 +73,7 @@ You will see a delay in the return of the run details due to an difference in ho
   * Or takes a hash with keys matching the parameters for install-module.
     * Name is required.
     * Force is automatically used and not required as part of the hash table.
-    * Repository defaults to either PSGallery or any custom feed defined, but can be overriden here.
+    * Repository defaults to either PSGallery or any custom feed defined, but can be overridden here.
 
 * gallery_name
   * Custom PowerShell gallery name to install modules from.
