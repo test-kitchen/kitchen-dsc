@@ -19,10 +19,6 @@ group :test do
   gem "minitest",  "~> 5.3"
 end
 
-group :chefstyle do
-  gem "chefstyle", "2.2.3"
-end
-
 group :cookstyle do
   gem "cookstyle"
 end
