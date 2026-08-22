@@ -24,3 +24,6 @@ tmp
 .yardoc
 _yardoc
 doc/
+
+# RSpec example status, used by --only-failures
+spec/examples.txt
