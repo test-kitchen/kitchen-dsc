@@ -1,15 +1,12 @@
 source "https://rubygems.org"
 
-gemspec
-
+gemspec development_group: :test
 group :development do
-  gem "countloc", "~> 0.4"
   gem "yard",      "~> 0.9", ">= 0.9.20"
   gem "pry"
   gem "pry-stack_explorer"
   gem "pry-byebug"
   gem "rb-readline"
-  gem "cane", "3.0.0"
 end
 
 group :test do
@@ -19,6 +16,6 @@ group :test do
   gem "minitest",  "~> 5.3"
 end
 
-group :chefstyle do
-  gem "chefstyle", "2.2.3"
+group :cookstyle do
+  gem "cookstyle"
 end
