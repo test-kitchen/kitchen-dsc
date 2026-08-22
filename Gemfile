@@ -9,7 +9,6 @@ group :development do
   gem "pry-stack_explorer"
   gem "pry-byebug"
   gem "rb-readline"
-  gem "cane", "3.0.0"
 end
 
 group :test do
