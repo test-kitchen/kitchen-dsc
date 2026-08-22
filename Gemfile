@@ -1,7 +1,6 @@
 source "https://rubygems.org"
 
-gemspec
-
+gemspec development_group: :test
 group :development do
   gem "yard",      "~> 0.9", ">= 0.9.20"
   gem "pry"
