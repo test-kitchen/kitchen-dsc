@@ -3,7 +3,6 @@ source "https://rubygems.org"
 gemspec
 
 group :development do
-  gem "countloc", "~> 0.4"
   gem "yard",      "~> 0.9", ">= 0.9.20"
   gem "pry"
   gem "pry-stack_explorer"
