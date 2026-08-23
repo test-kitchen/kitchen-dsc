@@ -18,6 +18,6 @@ module Kitchen
     # only appropriate as part of a release commit.
     #
     # @return [String] a frozen dotted version number
-    VERSION = "0.12.1".freeze
+    VERSION = "0.13.0".freeze
   end
 end
