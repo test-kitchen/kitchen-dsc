@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.13.0](https://github.com/test-kitchen/kitchen-dsc/compare/v0.12.1...v0.13.0) (2026-08-23)
+
+
+### Features
+
+* rewrite unit tests, add YARD docs and rake tasks ([#107](https://github.com/test-kitchen/kitchen-dsc/issues/107)) ([16cb07e](https://github.com/test-kitchen/kitchen-dsc/commit/16cb07ea3cbc6ed7395ccf57512d1a4cbef911a4))
+
 ## [0.12.1](https://github.com/test-kitchen/kitchen-dsc/compare/v0.12.0...v0.12.1) (2024-07-01)
 
 
