@@ -3,6 +3,8 @@ source "https://rubygems.org"
 gemspec development_group: :test
 group :development do
   gem "yard",      "~> 0.9", ">= 0.9.20"
+  # markdown provider for YARD
+  gem "kramdown"
   gem "pry"
   gem "pry-stack_explorer"
   gem "pry-byebug"
@@ -11,9 +13,8 @@ end
 
 group :test do
   gem "rake"
-  gem "rspec",     "~> 3.2"
-  gem "simplecov", "~> 0.9"
-  gem "minitest",  "~> 5.3"
+  gem "rspec",     "~> 3.13"
+  gem "simplecov", "~> 0.22"
 end
 
 group :cookstyle do

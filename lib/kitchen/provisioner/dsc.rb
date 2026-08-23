@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 # Author:: Steven Murawski (<steven.murawski@gmail.com>)
 #
@@ -13,10 +15,41 @@ require "kitchen/util"
 require "dsc_lcm_configuration"
 
 module Kitchen
+  # Test Kitchen's provisioner namespace, reopened to register the DSC
+  # provisioner alongside the ones that ship with Test Kitchen itself.
   module Provisioner
+    # Applies PowerShell Desired State Configuration to a Test Kitchen instance.
+    #
+    # The provisioner runs across the four Test Kitchen phases:
+    #
+    # 1. {#install_command} configures the Local Configuration Manager on the
+    #    system under test.
+    # 2. {#init_command} creates the remote configuration directory and, on
+    #    WMF 5, installs any modules requested from a PowerShell gallery.
+    # 3. {#create_sandbox} stages DSC resources and the configuration script on
+    #    the workstation, ready for upload.
+    # 4. {#prepare_command} compiles the configuration into a MOF on the system
+    #    under test and {#run_command} applies it.
+    #
+    # Two project layouts are supported, chosen automatically by
+    # {#powershell_module?}: *module style*, where the kitchen root is itself a
+    # PowerShell module (identified by a `<module name>.psd1` manifest), and
+    # *repository style*, where DSC resources live in a `modules` directory.
+    #
+    # @example Minimal kitchen.yml
+    #   provisioner:
+    #     name: dsc
+    #     dsc_local_configuration_manager_version: wmf5
+    #     configuration_script: web.ps1
+    #
+    # @see https://github.com/test-kitchen/kitchen-dsc kitchen-dsc README
     class Dsc < Base
       kitchen_provisioner_api_version 2
 
+      # @!attribute [rw] tmp_dir
+      #   @return [String, nil] path to a scratch directory on the system under
+      #     test. Set by consumers that need somewhere to write intermediate
+      #     files; unused by the provisioner itself.
       attr_accessor :tmp_dir
 
       default_config :modules_path, "modules"
@@ -37,11 +70,29 @@ module Kitchen
       default_config :dsc_local_configuration_manager_version, "wmf4"
       default_config :dsc_local_configuration_manager, {}
 
+      # Resolves the Local Configuration Manager settings before the instance is
+      # used.
+      #
+      # Replaces the caller's partial `:dsc_local_configuration_manager` hash
+      # with the fully defaulted settings for the configured WMF version, so
+      # later phases and `kitchen diagnose` see the values that will actually be
+      # applied.
+      #
+      # @param instance [Kitchen::Instance] the instance this provisioner serves
+      # @return [self]
       def finalize_config!(instance)
         config[:dsc_local_configuration_manager] = lcm.lcm_config
         super(instance)
       end
 
+      # Builds the command that configures the Local Configuration Manager.
+      #
+      # Runs during Test Kitchen's `install` phase, before any configuration is
+      # compiled, since the LCM controls how DSC behaves for the rest of the
+      # run.
+      #
+      # @return [String] PowerShell that declares and applies the `SetupLCM`
+      #   meta-configuration
       def install_command
         full_lcm_configuration_script = <<-EOH
         #{lcm.lcm_configuration_script}
@@ -53,6 +104,14 @@ module Kitchen
         wrap_powershell_code(full_lcm_configuration_script)
       end
 
+      # Builds the command that prepares the system under test for upload.
+      #
+      # Always creates the directory the configuration script will be copied
+      # into. On WMF 5 with `:modules_from_gallery` set, it also bootstraps
+      # PackageManagement and installs those modules.
+      #
+      # @return [String] PowerShell run during the `converge` phase, before
+      #   files are transferred
       def init_command
         script = <<~EOH
           #{setup_config_directory_script}
@@ -61,6 +120,17 @@ module Kitchen
         wrap_powershell_code(script)
       end
 
+      # Stages DSC resources and the configuration script into the sandbox.
+      #
+      # The sandbox is the local directory Test Kitchen uploads to the system
+      # under test. Which staging strategy runs depends on whether the project
+      # is laid out as a PowerShell module or as a repository of modules.
+      #
+      # @return [void]
+      # @raise [Errno::ENOENT] if the configuration script named by
+      #   `:configuration_script_folder` and `:configuration_script` is missing
+      # @see #prepare_resource_style_directory
+      # @see #prepare_repo_style_directory
       def create_sandbox
         super
         info("Staging DSC Resource Modules for copy to the SUT")
@@ -73,9 +143,19 @@ module Kitchen
         prepare_configuration_script
       end
 
+      # Builds the command that compiles configurations into MOF documents.
+      #
+      # Copies the uploaded modules onto the `PSModulePath`, loads the
+      # configuration script, then compiles each name in `:configuration_name`
+      # into `c:/configurations/<name>`. Any leftover MOF from a previous
+      # converge is removed first so a failed compile cannot be silently applied.
+      #
+      # @return [String] PowerShell run after files are transferred and before
+      #   {#run_command}
       def prepare_command
         info("Moving DSC Resources onto PSModulePath")
-        scripts = <<-EOH
+        # +@ makes an explicitly mutable buffer under frozen_string_literal.
+        scripts = +<<-EOH
 
         if (Test-Path (join-path #{config[:root_path]} 'modules'))
         {
@@ -133,10 +213,20 @@ module Kitchen
         wrap_powershell_code(scripts)
       end
 
+      # Builds the command that applies the compiled MOF documents.
+      #
+      # A DSC resource may require a reboot to finish. Rather than failing, the
+      # generated script reboots the node and exits 35, and this method opts the
+      # instance into retrying that exit code so the converge resumes once the
+      # node is back. Explicit `:retry_on_exit_code` and `:max_retries` settings
+      # are left untouched.
+      #
+      # @return [String] PowerShell that starts a DSC configuration job per
+      #   configuration name and reports its errors
       def run_command
         config[:retry_on_exit_code] = [35] if config[:retry_on_exit_code].empty?
         config[:max_retries] = 3 if config[:max_retries] == 1
-        scripts = ""
+        scripts = +""
         ensure_array(config[:configuration_name]).each do |configuration|
           info("Running the configuration #{configuration}")
           run_configuration_script = <<-EOH
@@ -163,6 +253,15 @@ module Kitchen
 
       private
 
+      # The Local Configuration Manager configuration for the target WMF version.
+      #
+      # Note that `DscLcmConfiguration::Factory` only recognizes `"4"`,
+      # `"wmf4_with_update"`, `"5"` and `"wmf5"`; every other value, including
+      # this provisioner's own `"wmf4"` default, yields the base LCM
+      # configuration.
+      #
+      # @api private
+      # @return [DscLcmConfiguration::LcmBase] a memoized LCM configuration
       def lcm
         @lcm ||= begin
           lcm_version = config[:dsc_local_configuration_manager_version]
@@ -171,10 +270,26 @@ module Kitchen
         end
       end
 
+      # PowerShell that creates the remote directory holding the configuration
+      # script.
+      #
+      # @api private
+      # @return [String] a `mkdir` invocation
       def setup_config_directory_script
         "mkdir (split-path (join-path #{config[:root_path]} #{sandboxed_configuration_script})) -force | out-null"
       end
 
+      # Renders a module specification hash as `install-module` parameters.
+      #
+      # A `Force` key is dropped because `-force` is already appended to every
+      # `install-module` call, and PowerShell rejects a duplicated parameter. A
+      # `Repository` key is added from the configured gallery unless the caller
+      # supplied one.
+      #
+      # @api private
+      # @param module_specification_hash [Hash] `install-module` parameters, as
+      #   given in kitchen.yml
+      # @return [String] space-separated `-Key Value` pairs
       def powershell_module_params(module_specification_hash)
         keys = module_specification_hash.keys.reject { |k| k.to_s.casecmp("force") == 0 }
         unless keys.any? { |k| k.to_s.downcase == "repository" }
@@ -184,6 +299,13 @@ module Kitchen
         keys.map { |key| "-#{key} #{module_specification_hash[key]}" }.join(" ")
       end
 
+      # Builds one `install-module` line per entry in `:modules_from_gallery`.
+      #
+      # Entries may be plain module names or hashes of `install-module`
+      # parameters.
+      #
+      # @api private
+      # @return [Array<String>] PowerShell `install-module` invocations
       def powershell_modules
         Array(config[:modules_from_gallery]).map do |powershell_module|
           params = if powershell_module.is_a? Hash
@@ -195,6 +317,14 @@ module Kitchen
         end
       end
 
+      # PowerShell that bootstraps the NuGet package provider.
+      #
+      # PackageManagement cannot install from a gallery until the NuGet provider
+      # is present, and its interactive bootstrap prompt would hang a converge.
+      #
+      # @api private
+      # @return [String, nil] the bootstrap command, or nil when
+      #   `:nuget_force_bootstrap` is disabled
       def nuget_force_bootstrap
         return unless config[:nuget_force_bootstrap]
 
@@ -202,6 +332,12 @@ module Kitchen
         "install-packageprovider nuget -force -forcebootstrap | out-null"
       end
 
+      # The PowerShellGet repository name to install modules from.
+      #
+      # @api private
+      # @return [String] `:gallery_name` when set, the public `PSGallery` when
+      #   neither gallery setting is given, and `testing` for an unnamed private
+      #   `:gallery_uri`
       def psmodule_repository_name
         return "PSGallery" if config[:gallery_name].nil? && config[:gallery_uri].nil?
         return "testing"   if config[:gallery_name].nil?
@@ -209,6 +345,11 @@ module Kitchen
         config[:gallery_name]
       end
 
+      # PowerShell that registers a private gallery as a package source.
+      #
+      # @api private
+      # @return [String, nil] the `register-packagesource` command, or nil when
+      #   no `:gallery_uri` is configured
       def register_psmodule_repository
         return if config[:gallery_uri].nil?
 
@@ -216,6 +357,11 @@ module Kitchen
         "register-packagesource -providername PowerShellGet -name '#{psmodule_repository_name}' -location '#{config[:gallery_uri]}' -force -trusted"
       end
 
+      # PowerShell that installs every requested gallery module.
+      #
+      # @api private
+      # @return [String, nil] the bootstrap, registration and install commands,
+      #   or nil when no gallery modules are configured
       def install_module_script
         return if config[:modules_from_gallery].nil?
 
@@ -226,28 +372,67 @@ module Kitchen
         EOH
       end
 
+      # Whether gallery modules should be installed during {#init_command}.
+      #
+      # Gallery installation depends on PowerShellGet, which ships with WMF 5.
+      #
+      # @api private
+      # @return [Boolean] true only when targeting WMF 5 with modules requested
       def install_modules?
         config[:dsc_local_configuration_manager_version] == "wmf5" &&
           !config[:modules_from_gallery].nil?
       end
 
+      # Name of the PowerShell variable holding configuration data.
+      #
+      # @api private
+      # @return [String] `:configuration_data_variable`, or `ConfigurationData`
+      #   when it was explicitly blanked out
       def configuration_data_variable
         config[:configuration_data_variable].nil? ? "ConfigurationData" : config[:configuration_data_variable]
       end
 
+      # PowerShell that assigns `:configuration_data` to its variable.
+      #
+      # @api private
+      # @return [String] a hashtable assignment
       def configuration_data_assignment
         "$" + configuration_data_variable + " = " + ps_hash(config[:configuration_data])
       end
 
+      # Wraps generated PowerShell for execution by the transport.
+      #
+      # Progress streams are silenced first: WinRM relays them as output, which
+      # makes converge logs unreadable and can slow long-running resources.
+      #
+      # @api private
+      # @param code [String] the PowerShell to wrap
+      # @return [String] the wrapped command
       def wrap_powershell_code(code)
         wrap_shell_code(["$ProgressPreference = 'SilentlyContinue';", code].join("\n"))
       end
 
+      # Whether the kitchen root is itself a PowerShell module.
+      #
+      # Detected by a `<module name>.psd1` manifest sitting beside the project,
+      # which selects module-style staging over repository-style staging.
+      #
+      # @api private
+      # @return [Boolean] true when a matching module manifest exists
       def powershell_module?
         module_metadata_file = File.join(config[:kitchen_root], "#{module_name}.psd1")
         File.exist?(module_metadata_file)
       end
 
+      # Lists the files to stage from a module-style project.
+      #
+      # Directories are excluded because the copy recreates them as needed, and
+      # repository housekeeping files are excluded because they are not part of
+      # the module.
+      #
+      # @api private
+      # @param path [String] directory to enumerate
+      # @return [Array<String>] absolute paths of files to stage
       def list_files(path)
         base_directory_content = Dir.glob(File.join(path, "*"))
         nested_directory_content = Dir.glob(File.join(path, "*/**/*"))
@@ -260,10 +445,22 @@ module Kitchen
         end
       end
 
+      # The PowerShell module name implied by the project directory.
+      #
+      # @api private
+      # @return [String] basename of `:kitchen_root`
       def module_name
         File.basename(config[:kitchen_root])
       end
 
+      # Stages a module-style project into the sandbox.
+      #
+      # The whole kitchen root is copied to `modules/<module name>` so the
+      # module lands on the system under test's `PSModulePath` under the name
+      # DSC expects.
+      #
+      # @api private
+      # @return [void]
       def prepare_resource_style_directory
         sandbox_base_module_path = File.join(sandbox_path, "modules/#{module_name}")
 
@@ -277,6 +474,13 @@ module Kitchen
         end
       end
 
+      # Stages a repository-style project into the sandbox.
+      #
+      # A missing modules directory is not an error: a project may ship only a
+      # configuration script and rely on resources already present on the node.
+      #
+      # @api private
+      # @return [void]
       def prepare_repo_style_directory
         module_path = File.join(config[:kitchen_root], config[:modules_path])
         sandbox_module_path = File.join(sandbox_path, "modules")
@@ -289,14 +493,38 @@ module Kitchen
         end
       end
 
+      # Path of the configuration script relative to the sandbox and to
+      # `:root_path` on the system under test.
+      #
+      # @api private
+      # @return [String] the sandboxed script path
       def sandboxed_configuration_script
         File.join("configuration", config[:configuration_script])
       end
 
+      # Indentation used when rendering PowerShell hashtables.
+      #
+      # @api private
+      # @param depth [Integer] number of spaces
+      # @return [String] a run of spaces
       def pad(depth = 0)
         " " * depth
       end
 
+      # Renders a Ruby object as a PowerShell literal.
+      #
+      # Hashes become hashtables and arrays become arrays; every other value is
+      # rendered as a double-quoted string, so Ruby booleans and integers reach
+      # DSC quoted.
+      #
+      # @api private
+      # @param obj [Hash, Array, Object] the value to render
+      # @param depth [Integer] current indentation depth
+      # @return [String] a PowerShell literal
+      #
+      # @example
+      #   ps_hash("AllNodes" => [{ "NodeName" => "*" }])
+      #   #=> %{@{\n  "AllNodes" =   @(\n@{\n        "NodeName" = "*"\n      }\n)\n}}
       def ps_hash(obj, depth = 0)
         if obj.is_a?(Hash)
           obj.map do |k, v|
@@ -310,6 +538,11 @@ module Kitchen
         end
       end
 
+      # Copies the DSC configuration script into the sandbox.
+      #
+      # @api private
+      # @return [void]
+      # @raise [Errno::ENOENT] if the configured script does not exist
       def prepare_configuration_script
         configuration_script_file = File.join(config[:configuration_script_folder], config[:configuration_script])
         configuration_script_path = File.join(config[:kitchen_root], configuration_script_file)
@@ -319,6 +552,12 @@ module Kitchen
         FileUtils.cp(configuration_script_path, sandbox_configuration_script_path)
       end
 
+      # Wraps a scalar in an array so `:configuration_name` may be given either
+      # as a single name or as a list.
+      #
+      # @api private
+      # @param thing [Object, Array] the value to normalize
+      # @return [Array] +thing+ if it is already an array, otherwise `[thing]`
       def ensure_array(thing)
         if thing.is_a?(Array)
           thing
