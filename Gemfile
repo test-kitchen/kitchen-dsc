@@ -14,7 +14,7 @@ end
 group :test do
   gem "rake"
   gem "rspec",     "~> 3.13"
-  gem "simplecov", "~> 0.22"
+  gem "simplecov", "~> 1.0"
 end
 
 group :cookstyle do
