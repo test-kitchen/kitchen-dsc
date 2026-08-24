@@ -17,5 +17,5 @@ Gem::Specification.new do |gem|
   gem.license           = "Apache-2.0"
 
   gem.add_dependency    "dsc_lcm_configuration"
-  gem.add_dependency    "test-kitchen", ">= 1.9"
+  gem.add_dependency    "test-kitchen", ">= 3.0", "< 5"
 end
