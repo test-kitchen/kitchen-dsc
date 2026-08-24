@@ -5,10 +5,6 @@ group :development do
   gem "yard",      "~> 0.9", ">= 0.9.20"
   # markdown provider for YARD
   gem "kramdown"
-  gem "pry"
-  gem "pry-stack_explorer"
-  gem "pry-byebug"
-  gem "rb-readline"
 end
 
 group :test do
