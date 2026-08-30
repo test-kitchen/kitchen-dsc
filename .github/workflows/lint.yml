@@ -1,5 +1,5 @@
 ---
-name: 'Lint, Unit & Integration Tests'
+name: 'Lint & Unit Tests'
 
 'on':
   pull_request:
