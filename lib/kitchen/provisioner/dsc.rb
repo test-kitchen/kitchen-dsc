@@ -291,12 +291,13 @@ module Kitchen
       #   given in kitchen.yml
       # @return [String] space-separated `-Key Value` pairs
       def powershell_module_params(module_specification_hash)
-        keys = module_specification_hash.keys.reject { |k| k.to_s.casecmp("force") == 0 }
-        unless keys.any? { |k| k.to_s.downcase == "repository" }
-          keys.push(:repository)
-          module_specification_hash[:repository] = psmodule_repository_name
-        end
-        keys.map { |key| "-#{key} #{module_specification_hash[key]}" }.join(" ")
+        # Work on a copy: this hash is the caller's own entry in
+        # config[:modules_from_gallery], and writing a :repository key back
+        # into it would leave `kitchen diagnose` reporting settings the user
+        # never wrote.
+        params = module_specification_hash.reject { |key, _| key.to_s.casecmp?("force") }
+        params[:repository] = psmodule_repository_name unless params.keys.any? { |key| key.to_s.casecmp?("repository") }
+        params.map { |key, value| "-#{key} #{value}" }.join(" ")
       end
 
       # Builds one `install-module` line per entry in `:modules_from_gallery`.
@@ -511,11 +512,34 @@ module Kitchen
         " " * depth
       end
 
+      # Characters PowerShell treats specially inside a double-quoted string.
+      #
+      # A backtick starts an escape sequence, a dollar sign starts a variable
+      # or subexpression, and a double quote ends the string.
+      #
+      # @api private
+      PS_DOUBLE_QUOTE_SPECIAL_CHARS = /[`$"]/
+
+      # Escapes a value for interpolation into a PowerShell double-quoted string.
+      #
+      # Without this, configuration data is silently corrupted: `P@$$w0rd`
+      # reaches DSC as `P@w0rd` because PowerShell expands `$$`, and a value
+      # containing a double quote ends the string early, which breaks the
+      # generated script outright.
+      #
+      # @api private
+      # @param value [Object] the value to escape; stringified first
+      # @return [String] +value+ with `` ` ``, `$` and `"` backtick-escaped
+      def escape_powershell_string(value)
+        value.to_s.gsub(PS_DOUBLE_QUOTE_SPECIAL_CHARS) { |char| "`#{char}" }
+      end
+
       # Renders a Ruby object as a PowerShell literal.
       #
       # Hashes become hashtables and arrays become arrays; every other value is
       # rendered as a double-quoted string, so Ruby booleans and integers reach
-      # DSC quoted.
+      # DSC quoted. Scalars are escaped by {#escape_powershell_string} so they
+      # survive the round trip unchanged.
       #
       # @api private
       # @param obj [Hash, Array, Object] the value to render
@@ -534,7 +558,7 @@ module Kitchen
           array_string = obj.map { |v| ps_hash(v, depth + 4) }.join(",")
           "#{pad(depth)}@(\n#{array_string}\n)"
         else
-          %{"#{obj}"}
+          %{"#{escape_powershell_string(obj)}"}
         end
       end
 

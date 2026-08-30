@@ -294,6 +294,28 @@ RSpec.describe Kitchen::Provisioner::Dsc do
           expect(command).not_to include("-Force true")
         end
       end
+
+      context "when the repository is defaulted into a module specification" do
+        subject(:provisioner) do
+          build_provisioner(
+            dsc_local_configuration_manager_version: "wmf5",
+            modules_from_gallery: [{ "Name" => "xWebAdministration" }]
+          )
+        end
+
+        # The hash is the user's own entry in config[:modules_from_gallery].
+        # Writing the resolved repository back into it would leave
+        # `kitchen diagnose` reporting a setting they never wrote.
+        it "does not write the resolved repository back into the user's config" do
+          command
+
+          expect(provisioner[:modules_from_gallery]).to eq([{ "Name" => "xWebAdministration" }])
+        end
+
+        it "still emits the same command when built twice" do
+          expect(provisioner.init_command).to eq(command)
+        end
+      end
     end
   end
 
@@ -485,6 +507,56 @@ RSpec.describe Kitchen::Provisioner::Dsc do
 
       it "passes the hashtable to the configuration" do
         expect(command).to include("-configurationdata $ConfigurationData")
+      end
+
+      # ps_hash renders scalars into PowerShell double-quoted strings, where a
+      # backtick escapes, a dollar sign interpolates and a double quote ends
+      # the string. Unescaped, `P@$$w0rd` reaches DSC as `P@w0rd` and a value
+      # containing a quote breaks the generated script outright.
+      context "with PowerShell metacharacters in the data" do
+        subject(:provisioner) do
+          build_provisioner(
+            configuration_data: {
+              "AllNodes" => [{
+                "NodeName" => "*",
+                "Password" => "P@$$w0rd",
+                "Home" => "$env:USERPROFILE",
+                "Quoted" => 'he said "hi"',
+                "Backtick" => 'C:\tmp`x',
+              }],
+            }
+          )
+        end
+
+        it "escapes a dollar sign so the value is not interpolated away" do
+          expect(command).to include('"Password" = "P@`$`$w0rd"')
+        end
+
+        it "escapes a variable reference rather than expanding it on the SUT" do
+          expect(command).to include('"Home" = "`$env:USERPROFILE"')
+        end
+
+        it "escapes a double quote so the string is not terminated early" do
+          expect(command).to include('"Quoted" = "he said `"hi`""')
+        end
+
+        it "escapes a literal backtick" do
+          expect(command).to include('"Backtick" = "C:\tmp``x"')
+        end
+
+        it "leaves a key containing no metacharacters alone" do
+          expect(command).to include('"NodeName" = "*"')
+        end
+      end
+
+      context "with PowerShell metacharacters in a key" do
+        subject(:provisioner) do
+          build_provisioner(configuration_data: { 'Odd"$Key' => "value" })
+        end
+
+        it "escapes the key too" do
+          expect(command).to include('"Odd`"`$Key" = "value"')
+        end
       end
 
       # `configuration_data_variable:` with an empty value in kitchen.yml parses
