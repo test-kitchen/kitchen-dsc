@@ -52,6 +52,13 @@ module Kitchen
       #     files; unused by the provisioner itself.
       attr_accessor :tmp_dir
 
+      # @!method tmp_dir=(value)
+      #   Points the provisioner at a scratch directory on the system under
+      #   test.
+      #
+      #   @param value [String, nil] the path to record, or nil to clear it
+      #   @return [String, nil] +value+
+
       default_config :modules_path, "modules"
 
       default_config :configuration_script_folder, "examples"
@@ -218,8 +225,12 @@ module Kitchen
       # A DSC resource may require a reboot to finish. Rather than failing, the
       # generated script reboots the node and exits 35, and this method opts the
       # instance into retrying that exit code so the converge resumes once the
-      # node is back. Explicit `:retry_on_exit_code` and `:max_retries` settings
-      # are left untouched.
+      # node is back. A `:retry_on_exit_code` list the caller already populated
+      # is left untouched.
+      #
+      # `:max_retries` is only left alone when it differs from Test Kitchen's
+      # default of `1`, which an explicit `max_retries: 1` does not: that
+      # setting is indistinguishable from the default and is raised to `3`.
       #
       # @return [String] PowerShell that starts a DSC configuration job per
       #   configuration name and reports its errors
@@ -286,6 +297,9 @@ module Kitchen
       # `Repository` key is added from the configured gallery unless the caller
       # supplied one.
       #
+      # Values are interpolated as written, without quoting, so a value
+      # containing a space reaches PowerShell as two arguments.
+      #
       # @api private
       # @param module_specification_hash [Hash] `install-module` parameters, as
       #   given in kitchen.yml
@@ -348,6 +362,10 @@ module Kitchen
 
       # PowerShell that registers a private gallery as a package source.
       #
+      # Only `:gallery_uri` triggers registration. A `:gallery_name` on its own
+      # names a source that must already be registered on the instance;
+      # otherwise `install-module` fails with `Unable to find repository`.
+      #
       # @api private
       # @return [String, nil] the `register-packagesource` command, or nil when
       #   no `:gallery_uri` is configured
@@ -376,6 +394,12 @@ module Kitchen
       # Whether gallery modules should be installed during {#init_command}.
       #
       # Gallery installation depends on PowerShellGet, which ships with WMF 5.
+      #
+      # The version test is an exact string comparison against `"wmf5"`, which
+      # is narrower than the set {#lcm} accepts: `"5"` also selects the WMF 5
+      # LCM, but leaves this false. Whenever it is false `:modules_from_gallery`
+      # is dropped from {#init_command} without a warning, and the converge
+      # fails later on the missing DSC resource.
       #
       # @api private
       # @return [Boolean] true only when targeting WMF 5 with modules requested
@@ -417,6 +441,11 @@ module Kitchen
       #
       # Detected by a `<module name>.psd1` manifest sitting beside the project,
       # which selects module-style staging over repository-style staging.
+      #
+      # {#module_name} is the basename of `:kitchen_root`, so the manifest has
+      # to match the directory the project was cloned into rather than the
+      # module's own name. Cloning into a differently named directory silently
+      # falls back to repository style.
       #
       # @api private
       # @return [Boolean] true when a matching module manifest exists
