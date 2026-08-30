@@ -511,11 +511,34 @@ module Kitchen
         " " * depth
       end
 
+      # Characters PowerShell treats specially inside a double-quoted string.
+      #
+      # A backtick starts an escape sequence, a dollar sign starts a variable
+      # or subexpression, and a double quote ends the string.
+      #
+      # @api private
+      PS_DOUBLE_QUOTE_SPECIAL_CHARS = /[`$"]/
+
+      # Escapes a value for interpolation into a PowerShell double-quoted string.
+      #
+      # Without this, configuration data is silently corrupted: `P@$$w0rd`
+      # reaches DSC as `P@w0rd` because PowerShell expands `$$`, and a value
+      # containing a double quote ends the string early, which breaks the
+      # generated script outright.
+      #
+      # @api private
+      # @param value [Object] the value to escape; stringified first
+      # @return [String] +value+ with `` ` ``, `$` and `"` backtick-escaped
+      def escape_powershell_string(value)
+        value.to_s.gsub(PS_DOUBLE_QUOTE_SPECIAL_CHARS) { |char| "`#{char}" }
+      end
+
       # Renders a Ruby object as a PowerShell literal.
       #
       # Hashes become hashtables and arrays become arrays; every other value is
       # rendered as a double-quoted string, so Ruby booleans and integers reach
-      # DSC quoted.
+      # DSC quoted. Scalars are escaped by {#escape_powershell_string} so they
+      # survive the round trip unchanged.
       #
       # @api private
       # @param obj [Hash, Array, Object] the value to render
@@ -534,7 +557,7 @@ module Kitchen
           array_string = obj.map { |v| ps_hash(v, depth + 4) }.join(",")
           "#{pad(depth)}@(\n#{array_string}\n)"
         else
-          %{"#{obj}"}
+          %{"#{escape_powershell_string(obj)}"}
         end
       end
 
