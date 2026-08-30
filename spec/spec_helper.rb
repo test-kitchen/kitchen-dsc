@@ -6,21 +6,6 @@
 # Licensed under the Apache 2 License.
 # See LICENSE for more details
 
-# Coverage must be started before any library code is loaded, otherwise methods
-# defined at require-time are recorded as uncovered. Set COVERAGE=false to skip
-# it (useful when bisecting or profiling a single spec file).
-unless ENV["COVERAGE"] == "false"
-  require "simplecov"
-
-  SimpleCov.start do
-    enable_coverage :branch
-    add_filter "/spec/"
-    track_files "lib/**/*.rb"
-    # Deliberately no `minimum_coverage`: coverage is a diagnostic here, not a
-    # gate. CI must never fail because a percentage moved.
-  end
-end
-
 require "kitchen"
 require "kitchen/provisioner/dsc"
 require "kitchen-dsc/version"

@@ -61,12 +61,7 @@ Useful environment variables:
 | `SEED=12345` | reproduce a specific random ordering |
 | `VERBOSE=1` | print full backtraces on failure |
 | `ONLY_FAILURES=1` | rerun only what failed last time |
-| `COVERAGE=false` | skip SimpleCov |
 | `RSPEC_WARNINGS=true` | enable Ruby warnings |
-
-Coverage is reported to `coverage/` after each run as a diagnostic. **It is not
-a gate** — no build fails because a percentage moved, and neither the coverage
-report nor the documentation build runs in CI.
 
 ## Documentation
 
