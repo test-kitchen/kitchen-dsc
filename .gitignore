@@ -27,3 +27,7 @@ doc/
 
 # RSpec example status, used by --only-failures
 spec/examples.txt
+
+# Test Kitchen working directory
+.kitchen/
+/kitchen.local.yml

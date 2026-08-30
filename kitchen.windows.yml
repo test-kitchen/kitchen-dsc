@@ -1,0 +1,45 @@
+---
+# Integration configuration used by the Windows CI job. The GitHub runner is
+# both the workstation and the system under test, so the proxy driver just
+# points Test Kitchen at localhost and WinRM does the rest. Nothing is created
+# or destroyed, so `reset_command` is a no-op.
+driver:
+  name: proxy
+  host: localhost
+  port: 5985
+  reset_command: "exit 0"
+
+# Credentials belong to the transport; the proxy driver only supplies the host.
+transport:
+  name: winrm
+  username: <%= ENV["MACHINE_USER"] %>
+  password: <%= ENV["MACHINE_PASS"] %>
+
+provisioner:
+  name: dsc
+  # windows-latest runners ship PowerShell 5.1, so the WMF 5 meta-configuration
+  # is the one that applies.
+  dsc_local_configuration_manager_version: wmf5
+  # Keep the fixtures out of the gem root: both paths are relative to the
+  # directory holding this file.
+  configuration_script_folder: test/fixtures/dsc
+  configuration_script: kitchen_dsc_test.ps1
+  modules_path: test/fixtures/modules
+  configuration_name: KitchenDscTest
+  configuration_data:
+    AllNodes:
+      - NodeName: localhost
+        TargetPath: C:\kitchen-dsc-integration
+        Marker: staged-by-kitchen-dsc
+
+platforms:
+  - name: windows-latest
+
+# The shell verifier runs on the workstation, which here is the same machine
+# DSC just configured.
+verifier:
+  name: shell
+  command: powershell -NoProfile -ExecutionPolicy Bypass -File test/integration/verify.ps1
+
+suites:
+  - name: default
