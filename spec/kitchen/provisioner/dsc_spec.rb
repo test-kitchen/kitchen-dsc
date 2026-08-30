@@ -295,6 +295,27 @@ RSpec.describe Kitchen::Provisioner::Dsc do
         end
       end
 
+      context "when the repository is defaulted into a module specification" do
+        subject(:provisioner) do
+          build_provisioner(
+            dsc_local_configuration_manager_version: "wmf5",
+            modules_from_gallery: [{ "Name" => "xWebAdministration" }]
+          )
+        end
+
+        # The hash is the user's own entry in config[:modules_from_gallery].
+        # Writing the resolved repository back into it would leave
+        # `kitchen diagnose` reporting a setting they never wrote.
+        it "does not write the resolved repository back into the user's config" do
+          command
+
+          expect(provisioner[:modules_from_gallery]).to eq([{ "Name" => "xWebAdministration" }])
+        end
+
+        it "still emits the same command when built twice" do
+          expect(provisioner.init_command).to eq(command)
+        end
+      end
     end
   end
 

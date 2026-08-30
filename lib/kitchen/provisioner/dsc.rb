@@ -291,12 +291,13 @@ module Kitchen
       #   given in kitchen.yml
       # @return [String] space-separated `-Key Value` pairs
       def powershell_module_params(module_specification_hash)
-        keys = module_specification_hash.keys.reject { |k| k.to_s.casecmp("force") == 0 }
-        unless keys.any? { |k| k.to_s.downcase == "repository" }
-          keys.push(:repository)
-          module_specification_hash[:repository] = psmodule_repository_name
-        end
-        keys.map { |key| "-#{key} #{module_specification_hash[key]}" }.join(" ")
+        # Work on a copy: this hash is the caller's own entry in
+        # config[:modules_from_gallery], and writing a :repository key back
+        # into it would leave `kitchen diagnose` reporting settings the user
+        # never wrote.
+        params = module_specification_hash.reject { |key, _| key.to_s.casecmp?("force") }
+        params[:repository] = psmodule_repository_name unless params.keys.any? { |key| key.to_s.casecmp?("repository") }
+        params.map { |key, value| "-#{key} #{value}" }.join(" ")
       end
 
       # Builds one `install-module` line per entry in `:modules_from_gallery`.
