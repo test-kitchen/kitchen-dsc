@@ -4,6 +4,14 @@
 
 * Remove dependabot config in favor of renovate ([#109](https://github.com/test-kitchen/kitchen-dsc/pull/109)) ([c63b9a4](https://github.com/test-kitchen/kitchen-dsc/commit/c63b9a4))
 
+## [0.13.1](https://github.com/test-kitchen/kitchen-dsc/compare/v0.13.0...v0.13.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* escape PowerShell metacharacters in configuration_data ([#116](https://github.com/test-kitchen/kitchen-dsc/issues/116)) ([6c70d35](https://github.com/test-kitchen/kitchen-dsc/commit/6c70d358508cee65e6499159ae9ec262c6738d2b))
+* require test-kitchen 3.0 or newer ([#112](https://github.com/test-kitchen/kitchen-dsc/issues/112)) ([96f1d74](https://github.com/test-kitchen/kitchen-dsc/commit/96f1d749e82c50ef8e36b2aaa739d074fd253ddd))
+
 ## [0.13.0](https://github.com/test-kitchen/kitchen-dsc/compare/v0.12.1...v0.13.0) (2026-08-23)
 
 ### Features
